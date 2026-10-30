@@ -1,0 +1,32 @@
+default: en
+languages:
+  - code: en
+    name: English
+    native_name: English
+    status: required
+    direction: ltr
+  - code: kn
+    name: Kannada
+    native_name: ಕನ್ನಡ
+    status: required
+    direction: ltr
+  - code: hi
+    name: Hindi
+    native_name: हिन्दी
+    status: required
+    direction: ltr
+  - code: ta
+    name: Tamil
+    native_name: தமிழ்
+    status: required
+    direction: ltr
+  - code: te
+    name: Telugu
+    native_name: తెలుగు
+    status: required
+    direction: ltr
+translation_policy:
+  ui_strings: curated_dictionaries
+  complaint_text: preserve_original_and_store_optional_translation
+  machine_translation_must_be_labelled: true
+  critical_strings_require_human_review: true

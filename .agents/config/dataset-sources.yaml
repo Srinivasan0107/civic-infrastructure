@@ -1,0 +1,113 @@
+# Civic Infrastructure Memory - Dataset Sources Configuration
+sources:
+  - id: bbmp_grievances
+    name: BBMP Grievances 2020–2025
+    url: https://data.opencity.in/dataset/bbmp-grievances-data
+    direct_download_urls:
+      2024: https://data.opencity.in/dataset/54344a76-a37a-4d05-961c-df9bac5494ad/resource/2a3f29ef-a7a1-4fc3-b125-cbcc958a89d1/download/82f88d50-71c5-4203-92ac-5ccb5cabc7a2.csv
+      2025: https://data.opencity.in/dataset/54344a76-a37a-4d05-961c-df9bac5494ad/resource/1342a93b-9a61-4766-9c34-c8357b7926c2/download/b0d6e9ff-5eef-48bf-ba86-985dbe8112d1.csv
+    role: primary_local_complaints
+    format: csv
+    geography: Bengaluru
+    data_use: complaint_history_and_nlp
+    license: ODC-ODbL / Open Government Data
+    required_checks: [license_terms, coverage_dates, missing_coordinates, source_record_id]
+
+  - id: bbmp_fix_my_street
+    name: BBMP Fix My Street
+    url: https://data.opencity.in/dataset/bbmp-fix-my-street-data
+    direct_download_urls:
+      aggregated: https://data.opencity.in/dataset/3a1a98f8-f924-4257-a2a1-3b957b55b9f5/resource/22be8fdc-532d-4ec8-8e31-2e6d26d5ce85/download/e03fbadf-ff1a-4fe1-9aad-a2a38a2bd81d.csv
+    role: road_and_pothole_complaints
+    format: csv
+    geography: Bengaluru
+    data_use: pothole_and_road_defect_tracking
+    license: ODC-ODbL / Open Government Data
+    required_checks: [license_terms, ward_mapping, duplicate_records]
+
+  - id: bbmp_work_orders_payments
+    name: BBMP Work Orders and Payments 2025–26
+    url: https://data.opencity.in/dataset/bbmp-budget
+    direct_download_urls:
+      capex: https://data.opencity.in/dataset/7ec5a0b8-4ba1-4608-bcc3-f2f560cb5498/resource/69f841d1-3d39-4ec1-979d-69c1b063fe1b/download/dacd5d63-7812-4e43-b3ab-f492ae6b64ac.csv
+    role: maintenance_expenditure_and_work_orders
+    format: csv
+    geography: Bengaluru
+    data_use: work_order_tracking_and_spend_analytics
+    license: Open Government Data
+    required_checks: [department_code, budget_head, actual_expenditure]
+
+  - id: bbmp_historical_work_orders
+    name: BBMP Historical Work Orders 2013–2022
+    url: https://data.opencity.in/dataset/bbmp-budget
+    direct_download_urls:
+      summary: https://data.opencity.in/dataset/7ec5a0b8-4ba1-4608-bcc3-f2f560cb5498/resource/c743ba04-0170-44c4-a5a3-17ed5f850f9a/download/a4f4fc3b-1c0e-4f29-8ee7-428a404d532e.csv
+    role: historical_maintenance_benchmark
+    format: csv
+    geography: Bengaluru
+    data_use: long_term_maintenance_trends
+    license: Open Government Data
+    required_checks: [year_alignment, historical_costs]
+
+  - id: bengaluru_streetlights
+    name: Bengaluru Streetlights
+    url: https://data.opencity.in/dataset/bengaluru-streetlights
+    direct_download_urls:
+      wards: https://data.opencity.in/dataset/68bab2e1-a94b-4ad5-b1b5-dc9658e462e4/resource/17cafe43-76ac-47fb-b893-fd2d2f0ebd0c/download/4aad68d1-752a-4ca0-b075-c40f27582a0f.csv
+    role: asset_reference
+    format: csv
+    geography: Bengaluru
+    data_use: streetlight_asset_inventory
+    license: ODC-ODbL / Open Government Data
+    required_checks: [license_terms, geometry_validity, asset_id_quality]
+
+  - id: openstreetmap_india
+    name: OpenStreetMap India (Bengaluru Extract)
+    url: https://nominatim.openstreetmap.org / https://download.geofabrik.de/asia/india.html
+    role: geospatial_reference
+    format: geojson
+    geography: Bengaluru
+    data_use: mapped_roads_and_civic_features
+    license: Open Database License (ODbL)
+    required_checks: [odbl_attribution, geometry_validity, coverage]
+
+  - id: rdd2022_india
+    name: RDD2022 India Road Damage Dataset
+    url: https://figshare.com/articles/dataset/RDD2022_-_The_multi-national_Road_Damage_Dataset_released_through_CRDDC_2022/21431547
+    role: visual_model_training_and_evidence
+    format: [jpg, xml]
+    geography: India
+    data_use: road_defect_image_detection_and_visual_evidence
+    license: CC BY-SA 4.0
+    label_taxonomy:
+      D00: longitudinal_crack
+      D10: transverse_crack
+      D20: alligator_crack
+      D40: pothole
+    required_checks: [dataset_terms, annotation_mapping, image_integrity, visual_evidence_review]
+
+  - id: nyc_311
+    name: NYC 311 Service Requests
+    url: https://data.cityofnewyork.us/resource/erm2-nwe9.json
+    role: supplementary_nlp_benchmark
+    format: json
+    geography: New York City
+    data_use: semantic_search_benchmark_not_bengaluru_operational_metrics
+    license: NYC Open Data Terms of Use
+    required_checks: [dataset_terms, category_filter, pii_minimization, strict_geography_separation]
+
+  - id: nyc_dot_pothole_work_orders
+    name: NYC DOT Pothole Work Orders - Closed
+    url: https://data.cityofnewyork.us/resource/x9wy-ing4.json
+    role: supplementary_maintenance_benchmark
+    format: json
+    geography: New York City
+    data_use: maintenance_timeline_benchmark_not_bengaluru_operational_metrics
+    license: NYC Open Data Terms of Use
+    required_checks: [dataset_terms, date_validation, spatial_matching_limits, strict_geography_separation]
+
+policy:
+  do_not_assume_public_data_has_unrestricted_reuse: true
+  capture_retrieval_date_and_license_url: true
+  never_mix_geographies_in_live_kpis: true
+  keep_source_payloads_immutable: true

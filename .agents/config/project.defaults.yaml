@@ -1,0 +1,92 @@
+project:
+  name: civic-infrastructure-memory
+  product_type: municipal_decision_support_dashboard
+  default_timezone: Asia/Kolkata
+
+frontend:
+  framework: react
+  language: typescript
+  bundler: vite
+  styling: tailwindcss
+  i18n: react-i18next
+  charts: recharts
+  maps: maplibre-gl
+  default_locale: en
+  supported_locales: [en, kn, hi, ta, te]
+
+backend:
+  framework: fastapi
+  python: "3.11+"
+  database_driver: pymongo
+  api_prefix: /api/v1
+  upload_chunk_size_mb: 8
+  embedding_model: intfloat/multilingual-e5-base
+  embedding_device: auto
+  max_semantic_candidates: 500
+  default_semantic_top_k: 20
+
+mongodb:
+  uri: mongodb://127.0.0.1:27017
+  database: civic_memory
+  gridfs_bucket: dataset_files
+  media_gridfs_bucket: media_files
+  collections:
+    - assets
+    - complaints
+    - inspections
+    - maintenance_actions
+    - attachments
+    - image_detections
+    - image_embeddings
+    - visual_matches
+    - media_processing_jobs
+    - raw_records
+    - rejected_records
+    - ingestion_jobs
+    - semantic_matches
+    - incident_clusters
+    - asset_risk_snapshots
+    - source_registry
+    - audit_events
+
+vision:
+  detector:
+    family: yolo
+    weights_env: ROAD_DAMAGE_DETECTOR_WEIGHTS
+    taxonomy: rdd2022_road_damage_v1
+    enabled_asset_types: [road_segment, road_defect]
+  image_embedding:
+    model: facebook/dinov2-base
+    device: auto
+    scopes: [full_image, defect_crop]
+    cache_dir: ./.model-cache
+  duplicate_detection:
+    sha256: true
+    perceptual_hash: true
+  matching:
+    local_cosine_rerank: true
+    prefilter_by_asset_geo_time: true
+    auto_confirm_recurrence: false
+    human_review_required: true
+
+semantic:
+  model: intfloat/multilingual-e5-base
+  query_prefix: "query: "
+  passage_prefix: "passage: "
+  auto_merge: false
+  require_spatial_evidence_when_available: true
+  human_review_required_for_asset_merge: true
+
+prediction:
+  mvp_method: explainable_rule_based_priority_score
+  score_min: 0
+  score_max: 100
+  show_probability_without_calibration: false
+  exclude_unverified_recurrence: true
+
+data:
+  raw_records_immutable: true
+  idempotent_ingestion: true
+  chunked_processing: true
+  preserve_source_provenance: true
+  separate_synthetic_demo_namespace: true
