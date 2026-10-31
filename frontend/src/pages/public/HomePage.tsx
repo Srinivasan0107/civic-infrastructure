@@ -374,19 +374,19 @@ export function HomePage() {
                 ))}
               </div>
 
-              {/* Search Form */}
-              <form onSubmit={handleSearchCorridor} className="relative max-w-xl">
-                <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+              {/* Search Form - Gel Glass Capsule */}
+              <form onSubmit={handleSearchCorridor} className="relative max-w-xl group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-teal-600 group-focus-within:text-teal-700 transition-colors pointer-events-none" />
                 <input
                   type="text"
                   value={searchCorridor}
                   onChange={(e) => setSearchCorridor(e.target.value)}
                   placeholder={searchPlaceholders[searchFilter]}
-                  className="w-full pl-10 pr-28 py-3 rounded-xl bg-white/95 border border-slate-200/90 text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white focus:border-transparent transition-all shadow-card"
+                  className="w-full pl-11 pr-28 py-3.5 rounded-full bg-gradient-to-r from-white/90 via-teal-50/40 to-white/90 backdrop-blur-xl border border-teal-500/30 text-slate-900 placeholder:text-slate-500 text-xs sm:text-sm shadow-[inset_0_1px_2px_rgba(255,255,255,1),0_2px_12px_rgba(0,168,150,0.08)] hover:border-teal-500/50 hover:shadow-[inset_0_1px_2px_rgba(255,255,255,1),0_4px_16px_rgba(0,168,150,0.12)] focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500 focus:bg-white transition-all duration-300"
                 />
                 <button
                   type="submit"
-                  className="absolute right-1.5 top-1.5 bottom-1.5 px-4 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs flex items-center gap-1.5 border border-teal-400/30 shadow-glass-teal hover:shadow-glass-teal-hover active:scale-[0.98] transition-all"
+                  className="absolute right-2 top-2 bottom-2 px-5 rounded-full bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs flex items-center gap-1.5 border border-teal-400/40 shadow-glass-teal hover:shadow-glass-teal-hover active:scale-[0.98] transition-all"
                 >
                   {t('home.explore_button')}
                 </button>
