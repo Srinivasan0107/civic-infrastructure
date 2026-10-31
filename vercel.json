@@ -1,7 +1,12 @@
 {
+  "framework": "vite",
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
   "rewrites": [
+    {
+      "source": "/api/v1/:path*",
+      "destination": "https://civic-infrastructure.onrender.com/api/v1/:path*"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
