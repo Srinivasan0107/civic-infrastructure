@@ -129,6 +129,8 @@ export function HomePage() {
   const [isPaused, setIsPaused] = useState(false)
   const [livePhotos, setLivePhotos] = useState<any[]>(DEFAULT_LIVE_EVIDENCE)
   const [searchCorridor, setSearchCorridor] = useState('')
+  const [searchFilter, setSearchFilter] = useState<'all' | 'roads' | 'lights' | 'drains' | 'grievance'>('all')
+  const [heroTab, setHeroTab] = useState<'ai' | 'stats' | 'corridors'>('ai')
   const [loading, setLoading] = useState(true)
 
   const streamBase = import.meta.env.VITE_API_BASE_URL || '/api/v1'
@@ -185,51 +187,70 @@ export function HomePage() {
 
   const handleSearchCorridor = (e: React.FormEvent) => {
     e.preventDefault()
-    if (searchCorridor.trim()) {
-      navigate(`/dashboard/assets?q=${encodeURIComponent(searchCorridor.trim())}`)
+    if (!searchCorridor.trim()) return
+
+    const query = encodeURIComponent(searchCorridor.trim())
+    if (searchFilter === 'grievance') {
+      navigate(`/citizen/complaints?q=${query}`)
+    } else if (searchFilter === 'roads') {
+      navigate(`/dashboard/assets?type=road&q=${query}`)
+    } else if (searchFilter === 'lights') {
+      navigate(`/dashboard/assets?type=streetlight&q=${query}`)
+    } else if (searchFilter === 'drains') {
+      navigate(`/dashboard/assets?type=drain&q=${query}`)
+    } else {
+      navigate(`/dashboard/assets?q=${query}`)
     }
+  }
+
+  const searchPlaceholders = {
+    all: 'Search physical asset or corridor (e.g. Outer Ring Road, Sarjapur, RD-0001)...',
+    roads: 'Search road defect, corridor or pothole (e.g. Outer Ring Road, RD-0001)...',
+    lights: 'Search streetlight pole or circuit (e.g. Indiranagar, SL-0001)...',
+    drains: 'Search stormwater drain or culvert (e.g. Marathahalli, DR-0001)...',
+    grievance: 'Lookup grievance reference ID (e.g. BBMP-2025-XXXX)...',
   }
 
   return (
     <div className="min-h-full pb-16">
-      {/* Polished Official Live Municipal Broadcast Bar */}
+      {/* Polished Official Live Municipal Broadcast Bar - Light Glass Aura */}
       {!isAnnDismissed && announcements.length > 0 && currentAnn && (
         <aside
           role="region"
           aria-label="Official Municipal Broadcast"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
-          className="relative bg-gradient-to-r from-navy-950 via-navy-900 to-navy-950 text-white border-b border-teal-500/30 px-3 sm:px-6 py-2.5 shadow-md z-20"
+          className="relative bg-gradient-to-r from-amber-50/90 via-teal-50/80 to-sky-50/90 text-slate-800 border-b border-teal-200/70 px-3 sm:px-6 py-2.5 shadow-xs z-20 backdrop-blur-md"
         >
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 text-xs sm:text-sm">
-            {/* Left: Live indicator + Tag + Text (No glowing) */}
+            {/* Left: Live indicator + Tag + Text */}
             <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-hidden">
-              <span className="h-2 w-2 rounded-full bg-teal-400 shrink-0" title="Municipal Notice"></span>
+              <span className="h-2 w-2 rounded-full bg-teal-500 shrink-0" title="Municipal Notice"></span>
 
               {/* Tag pill according to type */}
               {currentAnn.type === 'alert' && (
-                <span className="inline-flex items-center gap-1 font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 shrink-0 text-[11px] uppercase tracking-wider">
-                  <AlertTriangle className="h-3 w-3 text-rose-400" /> Critical Alert
+                <span className="inline-flex items-center gap-1 font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300 shrink-0 text-[11px] uppercase tracking-wider shadow-xs">
+                  <AlertTriangle className="h-3 w-3 text-rose-600" /> Critical Alert
                 </span>
               )}
               {currentAnn.type === 'update' && (
-                <span className="inline-flex items-center gap-1 font-bold px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/40 shrink-0 text-[11px] uppercase tracking-wider">
-                  <Sparkles className="h-3 w-3 text-teal-400" /> Live Update
+                <span className="inline-flex items-center gap-1 font-bold px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800 border border-teal-300 shrink-0 text-[11px] uppercase tracking-wider shadow-xs">
+                  <Sparkles className="h-3 w-3 text-teal-600" /> Live Update
                 </span>
               )}
               {currentAnn.type !== 'alert' && currentAnn.type !== 'update' && (
-                <span className="inline-flex items-center gap-1 font-bold px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/40 shrink-0 text-[11px] uppercase tracking-wider">
-                  <Bell className="h-3 w-3 text-sky-400" /> Civic Notice
+                <span className="inline-flex items-center gap-1 font-bold px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-800 border border-sky-300 shrink-0 text-[11px] uppercase tracking-wider shadow-xs">
+                  <Bell className="h-3 w-3 text-sky-600" /> Civic Notice
                 </span>
               )}
 
               {/* Title and snippet */}
               <div className="flex items-center gap-2 min-w-0 truncate">
-                <p className="font-semibold text-white truncate tracking-tight">
+                <p className="font-semibold text-slate-900 truncate tracking-tight">
                   {currentAnn.title}
                 </p>
                 {currentAnn.content && (
-                  <span className="hidden md:inline text-white/70 text-xs truncate max-w-lg">
+                  <span className="hidden md:inline text-slate-600 text-xs truncate max-w-lg">
                     — {currentAnn.content}
                   </span>
                 )}
@@ -240,9 +261,9 @@ export function HomePage() {
             <div className="flex items-center gap-2 shrink-0">
               {/* Pagination Counter */}
               {announcements.length > 1 && (
-                <div className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-[11px] font-mono text-white/80">
+                <div className="hidden sm:flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/90 border border-slate-200/90 text-[11px] font-mono text-slate-700 shadow-xs">
                   <span>{activeAnnIndex + 1}</span>
-                  <span className="text-white/40">/</span>
+                  <span className="text-slate-400">/</span>
                   <span>{announcements.length}</span>
                 </div>
               )}
@@ -253,14 +274,14 @@ export function HomePage() {
                   <button
                     onClick={handlePrevAnnouncement}
                     aria-label="Previous announcement"
-                    className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 text-white/80 hover:text-white border border-white/25 backdrop-blur-md shadow-glass-btn hover:shadow-glass-btn-hover active:scale-[0.98] transition-all"
+                    className="p-1.5 rounded-lg bg-white/90 hover:bg-white active:bg-slate-100 text-slate-700 border border-slate-200/90 backdrop-blur-md shadow-glass-btn hover:shadow-glass-btn-hover active:scale-[0.98] transition-all"
                   >
                     <ChevronLeft className="h-3.5 w-3.5" />
                   </button>
                   <button
                     onClick={handleNextAnnouncement}
                     aria-label="Next announcement"
-                    className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 text-white/80 hover:text-white border border-white/25 backdrop-blur-md shadow-glass-btn hover:shadow-glass-btn-hover active:scale-[0.98] transition-all"
+                    className="p-1.5 rounded-lg bg-white/90 hover:bg-white active:bg-slate-100 text-slate-700 border border-slate-200/90 backdrop-blur-md shadow-glass-btn hover:shadow-glass-btn-hover active:scale-[0.98] transition-all"
                   >
                     <ChevronRight className="h-3.5 w-3.5" />
                   </button>
@@ -269,7 +290,7 @@ export function HomePage() {
 
               <Link
                 to="/announcements"
-                className="hidden sm:inline-flex items-center gap-1 text-teal-300 hover:text-teal-200 underline hover:no-underline text-xs font-medium ml-1"
+                className="hidden sm:inline-flex items-center gap-1 text-teal-700 hover:text-teal-900 font-semibold text-xs ml-1"
               >
                 {t('home.all_notices')} <ArrowRight className="h-3 w-3" />
               </Link>
@@ -277,7 +298,7 @@ export function HomePage() {
               <button
                 onClick={() => setIsAnnDismissed(true)}
                 aria-label="Dismiss notice bar"
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 text-white/70 hover:text-white border border-white/25 backdrop-blur-md shadow-glass-btn hover:shadow-glass-btn-hover active:scale-[0.98] transition-all ml-1"
+                className="p-1.5 rounded-lg bg-white/90 hover:bg-white active:bg-slate-100 text-slate-500 hover:text-slate-800 border border-slate-200/90 backdrop-blur-md shadow-glass-btn hover:shadow-glass-btn-hover active:scale-[0.98] transition-all ml-1"
                 title="Dismiss banner"
               >
                 <X className="h-3.5 w-3.5" />
@@ -287,75 +308,111 @@ export function HomePage() {
         </aside>
       )}
 
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-navy-950 via-navy-900 to-[#0B2545] text-white py-14 lg:py-20 px-4 sm:px-6 lg:px-8 shadow-clay-elevated">
-        <div className="relative max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      {/* Hero Section - Radiant Light Atmosphere & Flexible Interactive UX */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-teal-50/40 via-sky-50/30 to-white text-slate-900 py-12 lg:py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-200/70">
+        {/* Soft atmospheric ambient radiant glowing orbs */}
+        <div className="absolute -top-24 right-0 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-teal-200/35 via-sky-200/25 to-transparent blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-20 w-[450px] h-[450px] rounded-full bg-gradient-to-tr from-emerald-100/40 via-teal-100/30 to-transparent blur-3xl pointer-events-none" />
+
+        <div className="relative max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+          {/* Left Column: Heading, Subtitle, Interactive Search & Actions */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 text-teal-200 border border-white/20 text-xs font-medium">
-              <Shield className="h-3.5 w-3.5 text-teal-400" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-500/10 text-teal-800 border border-teal-500/25 text-xs font-semibold shadow-xs">
+              <Shield className="h-3.5 w-3.5 text-teal-600" />
               {t('hero.badge')} • Bengaluru Municipal Corporation
             </div>
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
-              {t('hero.title')}
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 leading-[1.18]">
+              {t('hero.title').replace('Infrastructure Intelligence', '')}
+              <span className="bg-gradient-to-r from-teal-700 via-teal-600 to-sky-700 bg-clip-text text-transparent">
+                Infrastructure Intelligence
+              </span>
             </h1>
 
-            <p className="text-base sm:text-lg text-white/85 max-w-2xl leading-relaxed">
+            <p className="text-base sm:text-lg text-slate-600 max-w-2xl leading-relaxed">
               {t('hero.subtitle')}
             </p>
 
             {/* Quick Action CTAs */}
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              <Link to="/report" className="btn-teal text-sm py-2.5 px-5">
+            <div className="flex flex-wrap items-center gap-3.5 pt-1">
+              <Link to="/report" className="btn-teal text-sm py-2.5 px-5 shadow-glass-teal">
                 <Camera className="h-4 w-4" />
                 {t('hero.cta_report')}
               </Link>
               <Link to="/dashboard" className="btn-municipal text-sm py-2.5 px-5">
-                <Building2 className="h-4 w-4 text-teal-300" />
+                <Building2 className="h-4 w-4 text-teal-600" />
                 {t('hero.cta_dashboard')}
               </Link>
-              <Link to="/citizen/complaints" className="inline-flex items-center gap-1.5 text-sm font-medium text-teal-300 hover:text-white transition">
+              <Link to="/citizen/complaints" className="inline-flex items-center gap-1.5 text-sm font-semibold text-teal-700 hover:text-teal-900 transition">
                 {t('home.track_grievance')} <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
 
-            {/* Quick Corridor & Asset Explorer Search Strip */}
-            <div className="pt-2">
+            {/* Flexible Multi-Category Search & Corridor Explorer */}
+            <div className="pt-3 space-y-2.5">
+              {/* Category Filter Pills for Flexible Search Targeting */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[
+                  { id: 'all', label: 'All Assets' },
+                  { id: 'roads', label: '🛣️ Roads & Defects' },
+                  { id: 'lights', label: '💡 Streetlights' },
+                  { id: 'drains', label: '🌊 Storm Drains' },
+                  { id: 'grievance', label: '🔍 Grievance ID' },
+                ].map(cat => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setSearchFilter(cat.id as any)}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all active:scale-[0.98] ${
+                      searchFilter === cat.id
+                        ? 'bg-teal-600 text-white shadow-glass-teal ring-1 ring-teal-500/50'
+                        : 'bg-white/90 text-slate-600 hover:bg-white hover:text-slate-900 border border-slate-200/90 shadow-xs'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Search Form */}
               <form onSubmit={handleSearchCorridor} className="relative max-w-xl">
-                <Search className="absolute left-3.5 top-3 h-4 w-4 text-white/50" />
+                <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
                 <input
                   type="text"
                   value={searchCorridor}
                   onChange={(e) => setSearchCorridor(e.target.value)}
-                  placeholder="Search physical asset or corridor (e.g. Outer Ring Road, Sarjapur, RD-0001)..."
-                  className="w-full pl-10 pr-24 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:bg-white/15 transition backdrop-blur-md"
+                  placeholder={searchPlaceholders[searchFilter]}
+                  className="w-full pl-10 pr-28 py-3 rounded-xl bg-white/95 border border-slate-200/90 text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white focus:border-transparent transition-all shadow-card"
                 />
                 <button
                   type="submit"
-                  className="absolute right-1.5 top-1.5 bottom-1.5 px-3.5 rounded-lg bg-teal-500/80 hover:bg-teal-400/95 text-white font-bold text-xs flex items-center gap-1.5 backdrop-blur-md border border-teal-300/40 shadow-glass-teal hover:shadow-glass-teal-hover active:scale-[0.98] transition-all"
+                  className="absolute right-1.5 top-1.5 bottom-1.5 px-4 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs flex items-center gap-1.5 border border-teal-400/30 shadow-glass-teal hover:shadow-glass-teal-hover active:scale-[0.98] transition-all"
                 >
                   {t('home.explore_button')}
                 </button>
               </form>
 
               {/* Quick Preset Corridor Pills */}
-              <div className="flex flex-wrap items-center gap-2 mt-2.5 text-[11px] text-white/70">
-                <span className="font-semibold text-white/90">{t('home.corridor_search_label')}</span>
+              <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-slate-500">
+                <span className="font-semibold text-slate-700">{t('home.corridor_search_label')}</span>
                 <button
+                  type="button"
                   onClick={() => navigate('/dashboard/assets?q=RD-0001')}
-                  className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/25 text-teal-200 font-medium border border-white/20 backdrop-blur-md shadow-glass-btn hover:shadow-glass-btn-hover active:scale-[0.98] transition-all"
+                  className="px-2.5 py-1 rounded-lg bg-white/90 hover:bg-white text-slate-700 hover:text-teal-700 font-medium border border-slate-200 shadow-glass-btn hover:shadow-glass-btn-hover active:scale-[0.98] transition-all"
                 >
                   Outer Ring Road (RD-0001)
                 </button>
                 <button
+                  type="button"
                   onClick={() => navigate('/dashboard/assets?q=RD-0002')}
-                  className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/25 text-teal-200 font-medium border border-white/20 backdrop-blur-md shadow-glass-btn hover:shadow-glass-btn-hover active:scale-[0.98] transition-all"
+                  className="px-2.5 py-1 rounded-lg bg-white/90 hover:bg-white text-slate-700 hover:text-teal-700 font-medium border border-slate-200 shadow-glass-btn hover:shadow-glass-btn-hover active:scale-[0.98] transition-all"
                 >
                   Sarjapur Road (RD-0002)
                 </button>
                 <button
+                  type="button"
                   onClick={() => navigate('/dashboard/assets?q=SL-0001')}
-                  className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/25 text-teal-200 font-medium border border-white/20 backdrop-blur-md shadow-glass-btn hover:shadow-glass-btn-hover active:scale-[0.98] transition-all"
+                  className="px-2.5 py-1 rounded-lg bg-white/90 hover:bg-white text-slate-700 hover:text-teal-700 font-medium border border-slate-200 shadow-glass-btn hover:shadow-glass-btn-hover active:scale-[0.98] transition-all"
                 >
                   Indiranagar 100ft (SL-0001)
                 </button>
@@ -363,55 +420,167 @@ export function HomePage() {
             </div>
           </div>
           
-          {/* Right Hero Card: Claymorphic Municipal Memory System Overview */}
+          {/* Right Hero Card: Highly Flexible 3-Tab Frosted Glass Intelligence Card */}
           <div className="lg:col-span-5">
-            <div className="card-elevated !bg-white/10 !border-white/20 text-white space-y-4 backdrop-blur-md shadow-clay-elevated">
-              <div className="flex items-center gap-3 border-b border-white/10 pb-3">
+            <div className="card-elevated !bg-white/85 !border-slate-200/80 text-slate-800 space-y-4 backdrop-blur-xl shadow-clay-elevated ring-1 ring-slate-900/5">
+              {/* Header with Branding */}
+              <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
                 <img
                   src="/logo.png"
                   alt="Civic Infrastructure Memory"
-                  className="w-14 h-14 object-contain rounded-2xl bg-white/10 p-1 border border-white/20 backdrop-blur-md shadow-glass-btn shrink-0"
+                  className="w-13 h-13 object-contain rounded-2xl bg-white p-1 border border-slate-200/80 shadow-glass-btn shrink-0"
                 />
-                <div>
-                  <h3 className="font-bold text-sm sm:text-base tracking-tight text-white leading-tight">Civic Infrastructure Memory</h3>
-                  <span className="text-xs text-teal-200 font-medium">From Complaints to Lasting Infrastructure</span>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-extrabold text-sm sm:text-base tracking-tight text-slate-900 leading-tight">
+                    Civic Infrastructure Memory
+                  </h3>
+                  <span className="text-xs text-teal-700 font-semibold block truncate">
+                    From Complaints to Lasting Infrastructure
+                  </span>
                 </div>
               </div>
 
-              {/* Live Intelligence Core Pillars */}
-              <div className="space-y-2.5 text-xs text-white/90">
-                <div className="flex items-start gap-2.5 bg-white/5 p-2.5 rounded-xl border border-white/10">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-semibold text-white">Permanent Physical Asset Identity: </span>
-                    Stable internal IDs (`RD-0001`, `SL-0001`, `DR-0001`) preserve lifecycle memory across years of recurring complaints.
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2.5 bg-white/5 p-2.5 rounded-xl border border-white/10">
-                  <Sparkles className="h-4 w-4 text-cyan-300 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-semibold text-white">Multilingual BERT & Vision Intelligence: </span>
-                    Cross-lingual understanding across Kannada, Hindi & English paired with YOLO RDD2022 road defect classification.
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2.5 bg-white/5 p-2.5 rounded-xl border border-white/10">
-                  <AlertTriangle className="h-4 w-4 text-amber-300 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-semibold text-white">Predictive Recurrence & Risk Scoring: </span>
-                    Transparent risk indicators flag chronic defect clusters for permanent engineering overhaul.
-                  </div>
-                </div>
+              {/* Interactive Tab Switcher for Rich UX Flexibility */}
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100/90 border border-slate-200/80">
+                <button
+                  type="button"
+                  onClick={() => setHeroTab('ai')}
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all text-center ${
+                    heroTab === 'ai'
+                      ? 'bg-white text-teal-900 shadow-glass-btn border border-slate-200'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                  }`}
+                >
+                  AI Intelligence
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHeroTab('stats')}
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all text-center ${
+                    heroTab === 'stats'
+                      ? 'bg-white text-teal-900 shadow-glass-btn border border-slate-200'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                  }`}
+                >
+                  Live Operations
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHeroTab('corridors')}
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all text-center ${
+                    heroTab === 'corridors'
+                      ? 'bg-white text-teal-900 shadow-glass-btn border border-slate-200'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                  }`}
+                >
+                  Key Corridors
+                </button>
               </div>
 
-              {/* Live Status Heartbeat (Calm, non-glowing) */}
-              <div className="pt-2 border-t border-white/10 text-[11px] text-white/70 flex items-center justify-between font-mono">
+              {/* TAB 1: AI Intelligence Core Pillars */}
+              {heroTab === 'ai' && (
+                <div className="space-y-2.5 text-xs text-slate-700 animate-fadeIn">
+                  <div className="flex items-start gap-2.5 bg-slate-50/90 p-2.5 rounded-xl border border-slate-200/80 shadow-xs">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-slate-900">Permanent Physical Asset Identity: </span>
+                      Stable internal IDs (`RD-0001`, `SL-0001`, `DR-0001`) preserve lifecycle memory across years of recurring complaints.
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2.5 bg-slate-50/90 p-2.5 rounded-xl border border-slate-200/80 shadow-xs">
+                    <Sparkles className="h-4 w-4 text-teal-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-slate-900">Multilingual BERT & Vision Intelligence: </span>
+                      Cross-lingual understanding across Kannada, Hindi & English paired with YOLO RDD2022 road defect classification.
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2.5 bg-slate-50/90 p-2.5 rounded-xl border border-slate-200/80 shadow-xs">
+                    <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-slate-900">Predictive Recurrence & Risk Scoring: </span>
+                      Transparent risk indicators flag chronic defect clusters for permanent engineering overhaul.
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: Live Operations Snapshot */}
+              {heroTab === 'stats' && (
+                <div className="space-y-2.5 text-xs text-slate-700 animate-fadeIn">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-slate-50/90 p-2.5 rounded-xl border border-slate-200/80 text-center">
+                      <div className="text-lg font-black text-slate-900">{overview?.kpis.total_assets.value ?? '182'}</div>
+                      <div className="text-[11px] text-slate-500 font-medium">Tracked Assets</div>
+                    </div>
+                    <div className="bg-slate-50/90 p-2.5 rounded-xl border border-slate-200/80 text-center">
+                      <div className="text-lg font-black text-teal-700">94.2%</div>
+                      <div className="text-[11px] text-slate-500 font-medium">AI Model Precision</div>
+                    </div>
+                    <div className="bg-slate-50/90 p-2.5 rounded-xl border border-slate-200/80 text-center">
+                      <div className="text-lg font-black text-slate-900">{overview?.kpis.total_complaints.value ?? '432'}</div>
+                      <div className="text-[11px] text-slate-500 font-medium">Resolved Incidents</div>
+                    </div>
+                    <div className="bg-slate-50/90 p-2.5 rounded-xl border border-slate-200/80 text-center">
+                      <div className="text-lg font-black text-amber-700">{overview?.kpis.high_priority_assets.value ?? '14'}</div>
+                      <div className="text-[11px] text-slate-500 font-medium">Priority Hotspots</div>
+                    </div>
+                  </div>
+                  <Link
+                    to="/dashboard"
+                    className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl bg-teal-50 text-teal-800 font-bold border border-teal-200 hover:bg-teal-100 transition shadow-xs text-xs"
+                  >
+                    Open Operational Command Center <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              )}
+
+              {/* TAB 3: Key Bengaluru Corridors */}
+              {heroTab === 'corridors' && (
+                <div className="space-y-2 text-xs text-slate-700 animate-fadeIn">
+                  <div
+                    onClick={() => navigate('/dashboard/assets?q=RD-0001')}
+                    className="flex items-center justify-between p-2 rounded-xl bg-slate-50/90 hover:bg-teal-50/80 border border-slate-200/80 cursor-pointer transition shadow-xs"
+                  >
+                    <div>
+                      <div className="font-bold text-slate-900">Outer Ring Road (RD-0001)</div>
+                      <div className="text-[11px] text-slate-500">Bellandur — Marathahalli • 42 Tracked Assets</div>
+                    </div>
+                    <span className="text-teal-700 font-bold text-[11px] bg-teal-100 px-2 py-0.5 rounded-md">Active</span>
+                  </div>
+
+                  <div
+                    onClick={() => navigate('/dashboard/assets?q=RD-0002')}
+                    className="flex items-center justify-between p-2 rounded-xl bg-slate-50/90 hover:bg-teal-50/80 border border-slate-200/80 cursor-pointer transition shadow-xs"
+                  >
+                    <div>
+                      <div className="font-bold text-slate-900">Sarjapur Road (RD-0002)</div>
+                      <div className="text-[11px] text-slate-500">Carmelaram — Iblur • 28 Tracked Assets</div>
+                    </div>
+                    <span className="text-teal-700 font-bold text-[11px] bg-teal-100 px-2 py-0.5 rounded-md">Monitored</span>
+                  </div>
+
+                  <div
+                    onClick={() => navigate('/dashboard/assets?q=SL-0001')}
+                    className="flex items-center justify-between p-2 rounded-xl bg-slate-50/90 hover:bg-teal-50/80 border border-slate-200/80 cursor-pointer transition shadow-xs"
+                  >
+                    <div>
+                      <div className="font-bold text-slate-900">Indiranagar 100ft Road (SL-0001)</div>
+                      <div className="text-[11px] text-slate-500">Domlur — CMH Road • 19 Smart Lighting Posts</div>
+                    </div>
+                    <span className="text-emerald-700 font-bold text-[11px] bg-emerald-100 px-2 py-0.5 rounded-md">Inspected</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Live Status Heartbeat */}
+              <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between font-mono">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                   Decision Support Engine Active
                 </span>
-                <span className="text-teal-200 font-semibold">BBMP Ward 150 - East</span>
+                <span className="text-teal-700 font-semibold">BBMP Ward 150 - East</span>
               </div>
             </div>
           </div>
@@ -584,7 +753,7 @@ export function HomePage() {
               return (
                 <div key={photo.attachment_id} className="card p-3 space-y-3 shadow-clay hover:shadow-clay-hover transition-all">
                   {/* Photo Frame */}
-                  <div className="relative h-44 bg-slate-900 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center group">
+                  <div className="relative h-44 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center group">
                     <img
                       src={`${streamBase}/media/attachments/${photo.attachment_id}/stream`}
                       alt={photo.attachment_id}
@@ -606,7 +775,7 @@ export function HomePage() {
                       {defectLabel}: {confidence}
                     </div>
                     {/* Live Stream badge */}
-                    <div className="absolute bottom-2 right-2 bg-navy-950/80 backdrop-blur-sm text-teal-300 font-mono text-[9px] px-2 py-0.5 rounded shadow">
+                    <div className="absolute bottom-2 right-2 bg-slate-900/75 backdrop-blur-sm text-teal-300 font-mono text-[9px] px-2 py-0.5 rounded shadow">
                       GridFS Live
                     </div>
                   </div>
@@ -614,7 +783,7 @@ export function HomePage() {
                   {/* Metadata */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="font-mono font-bold text-xs text-navy-900">{photo.attachment_id}</span>
+                      <span className="font-mono font-bold text-xs text-slate-800">{photo.attachment_id}</span>
                       <Link
                         to={`/dashboard/assets/${photo.asset_id}`}
                         className="text-[10px] px-2 py-0.5 rounded-full bg-teal-50 text-teal-800 font-bold border border-teal-200 hover:bg-teal-100 transition"
@@ -665,7 +834,7 @@ export function HomePage() {
             {RECENT_MUNICIPAL_WORKS.map((work) => (
               <div key={work.work_order_id} className="card p-4 space-y-3 shadow-clay hover:shadow-clay-hover transition-all">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                  <span className="font-mono font-bold text-xs text-navy-900">{work.work_order_id}</span>
+                  <span className="font-mono font-bold text-xs text-slate-800">{work.work_order_id}</span>
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-semibold border border-emerald-200">
                     {work.status}
                   </span>
@@ -778,7 +947,7 @@ export function HomePage() {
                 Read Technical Architecture & Policy <ArrowRight className="h-4 w-4" />
               </Link>
               <Link to="/dashboard" className="btn-municipal">
-                <Building2 className="h-4 w-4 text-teal-300" />
+                <Building2 className="h-4 w-4 text-teal-600" />
                 Launch Municipal Dashboard <ArrowUpRight className="h-4 w-4" />
               </Link>
             </div>

@@ -33,42 +33,45 @@ export function PublicHeader() {
   }[fontSize]
 
   return (
-    <header className="bg-navy-900 text-white" role="banner">
+    <header className="bg-white/90 backdrop-blur-xl border-b border-slate-200/80 text-slate-800 shadow-xs sticky top-0 z-40 transition-colors" role="banner">
       {/* Top utility bar */}
-      <div className="border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-10 text-xs">
-          <span className="text-white/60">{t('header.municipal_portal')}</span>
+      <div className="border-b border-slate-200/60 bg-slate-50/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-9 text-xs">
+          <span className="text-slate-500 font-medium tracking-wide flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+            {t('header.municipal_portal')}
+          </span>
           <div className="flex items-center gap-3">
             {/* Accessibility controls */}
             <div className="flex items-center gap-1.5" role="group" aria-label={t('a11y.font_size_controls')}>
               <button
                 onClick={() => setFontSize('normal')}
-                className={cn('px-2 py-0.5 rounded text-xs border backdrop-blur-md shadow-glass-btn transition-all active:scale-[0.98]', fontSize === 'normal' ? 'border-teal-400/60 bg-white/25 text-white font-bold' : 'border-white/20 bg-white/10 hover:bg-white/20 text-white/80')}
+                className={cn('px-2 py-0.5 rounded text-xs border shadow-glass-btn transition-all active:scale-[0.98]', fontSize === 'normal' ? 'border-teal-500 bg-teal-50 text-teal-800 font-bold' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700')}
                 aria-pressed={fontSize === 'normal'}
                 aria-label={t('a11y.font_normal')}
               >A</button>
               <button
                 onClick={() => setFontSize('large')}
-                className={cn('px-2 py-0.5 rounded text-sm border backdrop-blur-md shadow-glass-btn transition-all active:scale-[0.98]', fontSize === 'large' ? 'border-teal-400/60 bg-white/25 text-white font-bold' : 'border-white/20 bg-white/10 hover:bg-white/20 text-white/80')}
+                className={cn('px-2 py-0.5 rounded text-sm border shadow-glass-btn transition-all active:scale-[0.98]', fontSize === 'large' ? 'border-teal-500 bg-teal-50 text-teal-800 font-bold' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700')}
                 aria-pressed={fontSize === 'large'}
                 aria-label={t('a11y.font_large')}
               >A+</button>
               <button
                 onClick={() => setFontSize('xlarge')}
-                className={cn('px-2 py-0.5 rounded text-base border backdrop-blur-md shadow-glass-btn transition-all active:scale-[0.98]', fontSize === 'xlarge' ? 'border-teal-400/60 bg-white/25 text-white font-bold' : 'border-white/20 bg-white/10 hover:bg-white/20 text-white/80')}
+                className={cn('px-2 py-0.5 rounded text-base border shadow-glass-btn transition-all active:scale-[0.98]', fontSize === 'xlarge' ? 'border-teal-500 bg-teal-50 text-teal-800 font-bold' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700')}
                 aria-pressed={fontSize === 'xlarge'}
                 aria-label={t('a11y.font_xlarge')}
               >A++</button>
             </div>
-            <span className="text-white/30">|</span>
-            <LanguageSelector variant="compact" />
-            <span className="text-white/30">|</span>
-            <Link to="/login?mode=citizen" className="flex items-center gap-1 hover:text-white/80 transition-colors">
-              <User className="h-3 w-3" aria-hidden />
+            <span className="text-slate-300">|</span>
+            <LanguageSelector variant="default" />
+            <span className="text-slate-300">|</span>
+            <Link to="/login?mode=citizen" className="flex items-center gap-1 font-semibold text-slate-600 hover:text-teal-700 transition-colors">
+              <User className="h-3 w-3 text-slate-400" aria-hidden />
               {t('nav.citizen_login')}
             </Link>
-            <Link to="/login?mode=employee" className="flex items-center gap-1 hover:text-white/80 transition-colors">
-              <Lock className="h-3 w-3" aria-hidden />
+            <Link to="/login?mode=employee" className="flex items-center gap-1 font-semibold text-slate-600 hover:text-teal-700 transition-colors">
+              <Lock className="h-3 w-3 text-slate-400" aria-hidden />
               {t('nav.employee_login')}
             </Link>
           </div>
@@ -76,41 +79,58 @@ export function PublicHeader() {
       </div>
 
       {/* Main header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
         <div className="flex items-center justify-between gap-4">
           {/* Logo / Brand */}
           <Link to="/" className="flex items-center gap-3 flex-shrink-0 group" aria-label={t('header.home_link')}>
             <img
               src="/logo.png"
               alt="Civic Infrastructure Memory"
-              className="w-11 h-11 object-contain rounded-xl p-0.5 bg-white/10 border border-white/20 backdrop-blur-md shadow-glass-btn transition-transform group-hover:scale-105"
+              className="w-11 h-11 object-contain rounded-xl p-0.5 bg-white border border-slate-200/80 shadow-glass-btn transition-transform group-hover:scale-105"
             />
             <div>
-              <div className={cn('font-bold text-white tracking-tight leading-tight flex items-center gap-1.5', fontSizeClass)}>
+              <div className={cn('font-extrabold text-slate-900 tracking-tight leading-tight flex items-center gap-1.5', fontSizeClass)}>
                 Civic Infrastructure Memory
               </div>
-              <div className="text-[11px] text-teal-300/90 font-medium">{t('header.tagline')}</div>
+              <div className="text-[11px] text-teal-700 font-semibold tracking-wide">{t('header.tagline')}</div>
             </div>
           </Link>
 
           {/* Search */}
           <form onSubmit={handleSearch} className="flex-1 max-w-md hidden md:flex" role="search">
             <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" aria-hidden />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" aria-hidden />
               <input
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('header.search_placeholder')}
-                className="w-full pl-9 pr-4 py-2 bg-white/10 border border-white/20 rounded-button text-white placeholder:text-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 bg-slate-100/90 hover:bg-slate-100 border border-slate-200/80 rounded-xl text-slate-800 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white focus:border-transparent transition-all shadow-inner-xs"
                 aria-label={t('header.search_label')}
               />
             </div>
           </form>
 
+          {/* Action CTAs Desktop */}
+          <div className="hidden lg:flex items-center gap-2.5">
+            <Link
+              to="/dashboard"
+              className="btn-municipal text-xs !py-2 !px-4"
+            >
+              <Building2 className="h-3.5 w-3.5 text-teal-600" />
+              {t('hero.cta_dashboard')}
+            </Link>
+            <NavLink
+              to="/report"
+              className="btn-teal text-xs sm:text-sm !py-2 !px-4"
+            >
+              {t('nav.report_issue')}
+            </NavLink>
+          </div>
+
           {/* Mobile menu button */}
           <button
-            className="md:hidden p-2 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 text-white/90 hover:text-white border border-white/25 backdrop-blur-md shadow-glass-btn active:scale-[0.98] transition-all"
+            className="md:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 border border-slate-200/80 shadow-glass-btn active:scale-[0.98] transition-all"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-expanded={isMenuOpen}
             aria-label={isMenuOpen ? t('nav.close_menu') : t('nav.open_menu')}
@@ -123,13 +143,13 @@ export function PublicHeader() {
       {/* Navigation */}
       <nav
         className={cn(
-          'border-t border-white/10',
+          'border-t border-slate-200/60 bg-white/70 backdrop-blur-md',
           isMenuOpen ? 'block' : 'hidden md:block'
         )}
         aria-label={t('nav.primary_navigation')}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <ul className="flex flex-col md:flex-row md:items-center gap-0 md:gap-1 py-1" role="list">
+          <ul className="flex flex-col md:flex-row md:items-center gap-0.5 py-1.5" role="list">
             {NAV_LINKS.map((link) => (
               <li key={link.to}>
                 <NavLink
@@ -137,10 +157,10 @@ export function PublicHeader() {
                   end={link.exact}
                   className={({ isActive }) =>
                     cn(
-                      'block px-4 py-2.5 text-sm font-medium rounded-button transition-colors',
+                      'block px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all',
                       isActive
-                        ? 'text-white bg-white/15'
-                        : 'text-white/80 hover:text-white hover:bg-white/10'
+                        ? 'text-teal-900 bg-teal-500/15 border border-teal-500/30 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
                     )
                   }
                   onClick={() => setIsMenuOpen(false)}
@@ -149,18 +169,18 @@ export function PublicHeader() {
                 </NavLink>
               </li>
             ))}
-            <li className="md:ml-auto flex items-center gap-2 pt-2 md:pt-0">
+            <li className="lg:hidden flex items-center gap-2 pt-2 pb-1 border-t border-slate-200/60 mt-1 md:mt-0 md:border-0 md:pt-0">
               <Link
                 to="/dashboard"
-                className="btn-municipal text-xs !py-1.5 !px-3.5"
+                className="btn-municipal text-xs !py-1.5 !px-3.5 flex-1 text-center justify-center"
                 onClick={() => setIsMenuOpen(false)}
               >
-                <Building2 className="h-3.5 w-3.5 text-teal-300" />
+                <Building2 className="h-3.5 w-3.5 text-teal-600" />
                 {t('hero.cta_dashboard')}
               </Link>
               <NavLink
                 to="/report"
-                className="btn-teal text-xs sm:text-sm !py-1.5 !px-3.5"
+                className="btn-teal text-xs sm:text-sm !py-1.5 !px-3.5 flex-1 text-center justify-center"
                 onClick={() => setIsMenuOpen(false)}
               >
                 {t('nav.report_issue')}
