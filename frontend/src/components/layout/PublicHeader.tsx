@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Search, Menu, X, Building2, User, Lock } from 'lucide-react'
+import { Menu, X, Building2, User, Lock } from 'lucide-react'
 import { LanguageSelector } from '@/components/common/LanguageSelector'
 import { cn } from '@/utils/cn'
 
@@ -14,17 +14,8 @@ const NAV_LINKS = [
 
 export function PublicHeader() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
   const [fontSize, setFontSize] = useState<'normal' | 'large' | 'xlarge'>('normal')
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      navigate(`/services?q=${encodeURIComponent(searchQuery.trim())}`)
-    }
-  }
 
   const fontSizeClass = {
     normal: '',
@@ -95,21 +86,6 @@ export function PublicHeader() {
               <div className="text-[11px] text-teal-700 font-semibold tracking-wide whitespace-nowrap truncate">{t('header.tagline')}</div>
             </div>
           </Link>
-
-          {/* Search - Liquid Gel Glass Finish with Subtle Low Gradient */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-md hidden md:flex" role="search">
-            <div className="relative w-full group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-teal-600 transition-colors group-focus-within:text-teal-700 pointer-events-none" aria-hidden />
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t('header.search_placeholder')}
-                className="w-full pl-11 pr-4 py-2.5 rounded-full bg-gradient-to-r from-teal-500/[0.08] via-sky-500/[0.10] to-emerald-500/[0.08] backdrop-blur-xl border border-teal-500/30 text-slate-900 placeholder:text-slate-500/90 font-medium text-xs sm:text-sm shadow-[inset_0_1px_2px_rgba(255,255,255,0.95),0_2px_8px_rgba(0,168,150,0.08)] hover:border-teal-500/50 hover:bg-gradient-to-r hover:from-teal-500/[0.12] hover:via-sky-500/[0.14] hover:to-emerald-500/[0.10] hover:shadow-[inset_0_1px_2px_rgba(255,255,255,1),0_4px_12px_rgba(0,168,150,0.12)] focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500 focus:bg-white/95 focus:shadow-[inset_0_1px_2px_rgba(255,255,255,1),0_4px_16px_rgba(0,168,150,0.16)] transition-all duration-300"
-                aria-label={t('header.search_label')}
-              />
-            </div>
-          </form>
 
           {/* Action CTAs Desktop */}
           <div className="hidden lg:flex items-center gap-2.5">

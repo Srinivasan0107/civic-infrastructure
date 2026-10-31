@@ -5,7 +5,7 @@ import {
   Building2, Construction, Droplets, Lightbulb, Footprints, 
   Bath, Database, Wrench, Sparkles, ArrowRight, Bell, CheckCircle2,
   AlertTriangle, Shield, Clock, ChevronLeft, ChevronRight, X, Camera,
-  Layers, Search, MapPin, Check, Activity, ArrowUpRight
+  Layers, MapPin, Check, Activity, ArrowUpRight
 } from 'lucide-react'
 import { overviewApi, announcementsApi, mediaApi } from '@/services/api/endpoints'
 import type { OverviewResponse, Announcement } from '@/services/api/types'
@@ -128,8 +128,6 @@ export function HomePage() {
   const [isAnnDismissed, setIsAnnDismissed] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [livePhotos, setLivePhotos] = useState<any[]>(DEFAULT_LIVE_EVIDENCE)
-  const [searchCorridor, setSearchCorridor] = useState('')
-  const [searchFilter, setSearchFilter] = useState<'all' | 'roads' | 'lights' | 'drains' | 'grievance'>('all')
   const [heroTab, setHeroTab] = useState<'ai' | 'stats' | 'corridors'>('ai')
   const [loading, setLoading] = useState(true)
 
@@ -183,32 +181,6 @@ export function HomePage() {
 
   const handleNextAnnouncement = () => {
     setActiveAnnIndex(prev => (prev + 1) % announcements.length)
-  }
-
-  const handleSearchCorridor = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!searchCorridor.trim()) return
-
-    const query = encodeURIComponent(searchCorridor.trim())
-    if (searchFilter === 'grievance') {
-      navigate(`/citizen/complaints?q=${query}`)
-    } else if (searchFilter === 'roads') {
-      navigate(`/dashboard/assets?type=road&q=${query}`)
-    } else if (searchFilter === 'lights') {
-      navigate(`/dashboard/assets?type=streetlight&q=${query}`)
-    } else if (searchFilter === 'drains') {
-      navigate(`/dashboard/assets?type=drain&q=${query}`)
-    } else {
-      navigate(`/dashboard/assets?q=${query}`)
-    }
-  }
-
-  const searchPlaceholders = {
-    all: 'Search physical asset or corridor (e.g. Outer Ring Road, Sarjapur, RD-0001)...',
-    roads: 'Search road defect, corridor or pothole (e.g. Outer Ring Road, RD-0001)...',
-    lights: 'Search streetlight pole or circuit (e.g. Indiranagar, SL-0001)...',
-    drains: 'Search stormwater drain or culvert (e.g. Marathahalli, DR-0001)...',
-    grievance: 'Lookup grievance reference ID (e.g. BBMP-2025-XXXX)...',
   }
 
   return (
@@ -347,97 +319,28 @@ export function HomePage() {
                 {t('home.track_grievance')} <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
-
-            {/* Flexible Multi-Category Search & Corridor Explorer */}
-            <div className="pt-3 space-y-2.5">
-              {/* Category Filter Pills for Flexible Search Targeting */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                {[
-                  { id: 'all', label: 'All Assets' },
-                  { id: 'roads', label: '🛣️ Roads & Defects' },
-                  { id: 'lights', label: '💡 Streetlights' },
-                  { id: 'drains', label: '🌊 Storm Drains' },
-                  { id: 'grievance', label: '🔍 Grievance ID' },
-                ].map(cat => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setSearchFilter(cat.id as any)}
-                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all active:scale-[0.98] ${
-                      searchFilter === cat.id
-                        ? 'bg-teal-600 text-white shadow-glass-teal ring-1 ring-teal-500/50'
-                        : 'bg-white/90 text-slate-600 hover:bg-white hover:text-slate-900 border border-slate-200/90 shadow-xs'
-                    }`}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Search Form - Gel Glass Capsule */}
-              <form onSubmit={handleSearchCorridor} className="relative max-w-xl group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-teal-600 group-focus-within:text-teal-700 transition-colors pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchCorridor}
-                  onChange={(e) => setSearchCorridor(e.target.value)}
-                  placeholder={searchPlaceholders[searchFilter]}
-                  className="w-full pl-11 pr-28 py-3.5 rounded-full bg-gradient-to-r from-white/90 via-teal-50/40 to-white/90 backdrop-blur-xl border border-teal-500/30 text-slate-900 placeholder:text-slate-500 text-xs sm:text-sm shadow-[inset_0_1px_2px_rgba(255,255,255,1),0_2px_12px_rgba(0,168,150,0.08)] hover:border-teal-500/50 hover:shadow-[inset_0_1px_2px_rgba(255,255,255,1),0_4px_16px_rgba(0,168,150,0.12)] focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500 focus:bg-white transition-all duration-300"
-                />
-                <button
-                  type="submit"
-                  className="absolute right-2 top-2 bottom-2 px-5 rounded-full bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs flex items-center gap-1.5 border border-teal-400/40 shadow-glass-teal hover:shadow-glass-teal-hover active:scale-[0.98] transition-all"
-                >
-                  {t('home.explore_button')}
-                </button>
-              </form>
-
-              {/* Quick Preset Corridor Pills */}
-              <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-slate-500">
-                <span className="font-semibold text-slate-700">{t('home.corridor_search_label')}</span>
-                <button
-                  type="button"
-                  onClick={() => navigate('/dashboard/assets?q=RD-0001')}
-                  className="px-2.5 py-1 rounded-lg bg-white/90 hover:bg-white text-slate-700 hover:text-teal-700 font-medium border border-slate-200 shadow-glass-btn hover:shadow-glass-btn-hover active:scale-[0.98] transition-all"
-                >
-                  Outer Ring Road (RD-0001)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate('/dashboard/assets?q=RD-0002')}
-                  className="px-2.5 py-1 rounded-lg bg-white/90 hover:bg-white text-slate-700 hover:text-teal-700 font-medium border border-slate-200 shadow-glass-btn hover:shadow-glass-btn-hover active:scale-[0.98] transition-all"
-                >
-                  Sarjapur Road (RD-0002)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate('/dashboard/assets?q=SL-0001')}
-                  className="px-2.5 py-1 rounded-lg bg-white/90 hover:bg-white text-slate-700 hover:text-teal-700 font-medium border border-slate-200 shadow-glass-btn hover:shadow-glass-btn-hover active:scale-[0.98] transition-all"
-                >
-                  Indiranagar 100ft (SL-0001)
-                </button>
-              </div>
-            </div>
           </div>
           
           {/* Right Hero Card: Highly Flexible 3-Tab Frosted Glass Intelligence Card */}
           <div className="lg:col-span-5">
             <div className="card-elevated !bg-white/85 !border-slate-200/80 text-slate-800 space-y-4 backdrop-blur-xl shadow-clay-elevated ring-1 ring-slate-900/5">
-              {/* Header with Branding */}
-              <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
-                <img
-                  src="/logo.png"
-                  alt="Civic Infrastructure Memory"
-                  className="w-13 h-13 object-contain rounded-2xl bg-white p-1 border border-slate-200/80 shadow-glass-btn shrink-0"
-                />
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-extrabold text-sm sm:text-base tracking-tight text-slate-900 leading-tight">
-                    Civic Infrastructure Memory
-                  </h3>
-                  <span className="text-xs text-teal-700 font-semibold block truncate">
-                    From Complaints to Lasting Infrastructure
-                  </span>
+              {/* Header with Reduced Sleek Symbol on Right Side */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src="/logo.png"
+                    alt="Civic Memory"
+                    className="w-7 h-7 object-contain rounded-lg bg-white p-0.5 border border-teal-500/20 shadow-xs shrink-0"
+                  />
+                  <div>
+                    <span className="font-bold text-xs text-slate-900 block leading-tight">Decision Intelligence</span>
+                    <span className="text-[10px] text-teal-600 font-medium block">Municipal Infrastructure Memory</span>
+                  </div>
                 </div>
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Active
+                </span>
               </div>
 
               {/* Interactive Tab Switcher for Rich UX Flexibility */}
