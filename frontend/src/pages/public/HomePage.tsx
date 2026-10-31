@@ -282,9 +282,9 @@ export function HomePage() {
 
       {/* Hero Section - Radiant Light Atmosphere & Flexible Interactive UX */}
       <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-teal-50/40 via-sky-50/30 to-white text-slate-900 py-12 lg:py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-200/70">
-        {/* Soft atmospheric ambient radiant glowing orbs */}
-        <div className="absolute -top-24 right-0 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-teal-200/35 via-sky-200/25 to-transparent blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-20 w-[450px] h-[450px] rounded-full bg-gradient-to-tr from-emerald-100/40 via-teal-100/30 to-transparent blur-3xl pointer-events-none" />
+        {/* Soft atmospheric ambient radiant glowing orbs with scrolling motion */}
+        <div className="ambient-glow-float-1 absolute -top-24 right-0 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-teal-200/35 via-sky-200/25 to-transparent blur-3xl pointer-events-none" />
+        <div className="ambient-glow-float-2 absolute -bottom-24 -left-20 w-[450px] h-[450px] rounded-full bg-gradient-to-tr from-emerald-100/40 via-teal-100/30 to-transparent blur-3xl pointer-events-none" />
 
         <div className="relative max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
           {/* Left Column: Heading, Subtitle, Interactive Search & Actions */}

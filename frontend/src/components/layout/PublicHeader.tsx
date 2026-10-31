@@ -24,9 +24,9 @@ export function PublicHeader() {
   }[fontSize]
 
   return (
-    <header className="bg-gradient-to-r from-white/95 via-teal-50/40 via-sky-50/35 to-white/95 backdrop-blur-2xl border-b border-teal-500/20 text-slate-800 shadow-[0_4px_24px_rgba(0,168,150,0.04)] sticky top-0 z-40 transition-all duration-200" role="banner">
-      {/* Top utility bar */}
-      <div className="border-b border-teal-500/15 bg-gradient-to-r from-slate-50/95 via-teal-50/30 to-sky-50/35 backdrop-blur-md">
+    <header className="bg-gradient-to-r from-white/95 via-teal-50/40 via-sky-50/35 to-white/95 backdrop-blur-2xl border-b border-teal-500/20 text-slate-800 shadow-[0_4px_24px_rgba(0,168,150,0.04)] sticky top-0 z-50 transition-all duration-200" role="banner">
+      {/* Top utility bar - Elevated z-50 so Language dropdown floats cleanly above Main header and action buttons */}
+      <div className="relative z-50 border-b border-teal-500/15 bg-gradient-to-r from-slate-50/95 via-teal-50/30 to-sky-50/35 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-between h-9 text-xs">
           <span className="text-slate-600 font-semibold tracking-wide flex items-center gap-1.5 min-w-0">
             <span className="w-1.5 h-1.5 rounded-full bg-teal-500 shadow-glass-teal shrink-0" />
@@ -71,8 +71,8 @@ export function PublicHeader() {
         </div>
       </div>
 
-      {/* Main header */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5">
+      {/* Main header - z-20 so it sits below the top utility bar dropdown */}
+      <div className="relative z-20 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5">
         <div className="flex items-center justify-between gap-3 sm:gap-4">
           {/* Logo / Brand - Seamless Gel Glass Capsule */}
           <Link to="/" className="flex items-center gap-2 sm:gap-3 flex-shrink-0 group px-2 sm:px-2.5 py-1.5 rounded-2xl bg-white/70 hover:bg-white/95 backdrop-blur-md border border-teal-500/20 shadow-glass-btn hover:shadow-card transition-all" aria-label={t('header.home_link')}>
@@ -121,7 +121,7 @@ export function PublicHeader() {
       {/* Navigation */}
       <nav
         className={cn(
-          'border-t border-teal-500/15 bg-gradient-to-r from-white/85 via-teal-50/25 to-white/85 backdrop-blur-xl',
+          'relative z-10 border-t border-teal-500/15 bg-gradient-to-r from-white/85 via-teal-50/25 to-white/85 backdrop-blur-xl',
           isMenuOpen ? 'block' : 'hidden md:block'
         )}
         aria-label={t('nav.primary_navigation')}

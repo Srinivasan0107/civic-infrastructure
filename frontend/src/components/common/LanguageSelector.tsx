@@ -44,14 +44,14 @@ export function LanguageSelector({ variant = 'default', className }: LanguageSel
   }
 
   return (
-    <div ref={containerRef} className={cn('relative z-50 group', className)}>
+    <div ref={containerRef} className={cn('relative z-[100]', className)}>
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
           'flex items-center gap-1.5 text-sm font-semibold rounded-xl px-3 py-1.5 shadow-glass-btn active:scale-[0.98] transition-all border backdrop-blur-md',
           variant === 'default'
-            ? 'text-slate-800 bg-white/80 hover:bg-white border-slate-200/80 hover:border-slate-300'
+            ? 'text-slate-800 bg-white/90 hover:bg-white border-slate-200/80 hover:border-slate-300'
             : 'text-white hover:text-white bg-white/10 hover:bg-white/20 border-white/25'
         )}
         aria-label={`Language: ${currentLang.nativeLabel}. Click to change.`}
@@ -63,13 +63,13 @@ export function LanguageSelector({ variant = 'default', className }: LanguageSel
         <ChevronDown className={cn('h-3.5 w-3.5 transition-transform duration-200', open && 'rotate-180')} aria-hidden />
       </button>
 
-      {/* Dropdown Menu - Frosted Glass floating card with high z-index */}
+      {/* Dropdown Menu - Frosted solid card with high z-index, positioned strictly on top */}
       <div
         className={cn(
-          'absolute right-0 top-full mt-2 w-48 bg-white/95 backdrop-blur-xl rounded-2xl shadow-elevated border border-slate-200/80 z-[100] py-2 transition-all duration-150 ring-1 ring-slate-900/5',
+          'absolute right-0 top-full mt-2 w-52 bg-white/98 backdrop-blur-2xl rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.18)] border border-slate-200/90 z-[120] py-2 transition-all duration-150 ring-1 ring-slate-900/10',
           open
-            ? 'opacity-100 visible translate-y-0'
-            : 'opacity-0 invisible -translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0'
+            ? 'opacity-100 visible translate-y-0 pointer-events-auto'
+            : 'opacity-0 invisible -translate-y-1 pointer-events-none'
         )}
         role="listbox"
         aria-label="Select language"
