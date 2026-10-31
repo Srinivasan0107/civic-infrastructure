@@ -49,10 +49,10 @@ export function LanguageSelector({ variant = 'default', className }: LanguageSel
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
-          'flex items-center gap-1.5 text-sm font-semibold rounded-xl px-3 py-1.5 shadow-sm active:scale-[0.98] transition-all border-2 border-slate-900',
+          'flex items-center gap-1.5 text-sm font-semibold rounded-xl px-3 py-1.5 shadow-glass-btn active:scale-[0.98] transition-all border backdrop-blur-md',
           variant === 'default'
-            ? 'text-slate-900 bg-white hover:bg-slate-50'
-            : 'text-white hover:text-white bg-white/10 hover:bg-white/20 border-white/40'
+            ? 'text-slate-800 bg-white/80 hover:bg-white border-slate-200/80 hover:border-slate-300'
+            : 'text-white hover:text-white bg-white/10 hover:bg-white/20 border-white/25'
         )}
         aria-label={`Language: ${currentLang.nativeLabel}. Click to change.`}
         aria-haspopup="listbox"
@@ -63,10 +63,10 @@ export function LanguageSelector({ variant = 'default', className }: LanguageSel
         <ChevronDown className={cn('h-3.5 w-3.5 transition-transform duration-200', open && 'rotate-180')} aria-hidden />
       </button>
 
-      {/* Dropdown Menu - Floating with high z-index and dark outline */}
+      {/* Dropdown Menu - Frosted Glass floating card with high z-index */}
       <div
         className={cn(
-          'absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-2xl border-2 border-slate-900 z-[100] py-1.5 transition-all duration-150',
+          'absolute right-0 top-full mt-2 w-48 bg-white/95 backdrop-blur-xl rounded-2xl shadow-elevated border border-slate-200/80 z-[100] py-2 transition-all duration-150 ring-1 ring-slate-900/5',
           open
             ? 'opacity-100 visible translate-y-0'
             : 'opacity-0 invisible -translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0'
@@ -84,12 +84,12 @@ export function LanguageSelector({ variant = 'default', className }: LanguageSel
             className={cn(
               'w-full flex items-center justify-between px-3.5 py-2 text-sm text-left transition-colors',
               lang.code === activeCode
-                ? 'text-teal-900 font-bold bg-teal-50 border-l-4 border-slate-900'
-                : 'text-slate-800 font-medium hover:bg-slate-100'
+                ? 'text-teal-900 font-bold bg-teal-500/10 border-l-4 border-teal-500'
+                : 'text-slate-700 font-medium hover:bg-slate-100/80'
             )}
           >
             <span lang={lang.code}>{lang.nativeLabel}</span>
-            <span className="text-slate-500 text-xs font-mono uppercase font-semibold">{lang.label}</span>
+            <span className="text-slate-400 text-xs font-mono uppercase font-semibold">{lang.label}</span>
           </button>
         ))}
       </div>
