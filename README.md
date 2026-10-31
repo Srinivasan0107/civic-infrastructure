@@ -209,7 +209,43 @@ npm run build
 
 ---
 
-## 6. Truthfulness, Privacy & Provenance Guarantees
+## 6. Cloud Deployment Guide (Render & Vercel)
+
+### A. Deploy Backend to Render (FastAPI)
+1. Go to **[Render Dashboard](https://dashboard.render.com/)** and click **New +** &rarr; **Web Service**.
+2. Connect your repository: `Srinivasan0107/civic-infrastructure`.
+3. Configure the service settings:
+   - **Name**: `civic-infrastructure-backend` (or your preferred name)
+   - **Root Directory**: `backend`
+   - **Environment**: `Python 3`
+   - **Region**: Any (e.g. `Oregon (US West)` or `Singapore`)
+   - **Branch**: `main`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+4. Add **Environment Variables** in Render:
+   - `MONGODB_URI`: `mongodb+srv://Civic:SAI2006@cluster0.fr0tkwo.mongodb.net/?retryWrites=true&w=majority`
+   - `MONGODB_DATABASE`: `civic_memory`
+   - `PYTHON_VERSION`: `3.11.9`
+   - `APP_ENV`: `production`
+5. Click **Create Web Service**. Your API will be live at `https://civic-infrastructure-backend.onrender.com`.
+
+---
+
+### B. Deploy Frontend to Vercel (React + Vite)
+1. Go to **[Vercel Dashboard](https://vercel.com/new)** and click **Add New...** &rarr; **Project**.
+2. Import the `Srinivasan0107/civic-infrastructure` GitHub repository.
+3. Configure project settings:
+   - **Framework Preset**: `Vite`
+   - **Root Directory**: Click edit and select `frontend`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+4. Add **Environment Variable** in Vercel:
+   - `VITE_API_BASE_URL`: `https://civic-infrastructure-backend.onrender.com/api/v1` *(Replace with your actual Render URL)*
+5. Click **Deploy**. Vercel will build the React application and deploy it with automatic SPA route rewrites configured via `vercel.json`.
+
+---
+
+## 7. Truthfulness, Privacy & Provenance Guarantees
 
 - **No Artificial Live Data**: All demo records are explicitly tagged with `verification.status = "synthetic_demo"`.
 - **Candidate Evidence Only**: Neither semantic text similarity nor DINOv2 image similarity automatically merges assets; they are presented as candidates for human engineer review.
@@ -218,6 +254,6 @@ npm run build
 
 ---
 
-## 7. License
+## 8. License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
