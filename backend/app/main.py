@@ -1,5 +1,7 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.core.config import settings
@@ -80,15 +82,47 @@ app.include_router(reports.router, prefix=api_v1_prefix)
 # Also mount overview directly at /analytics for parity with requested spec
 app.include_router(overview.router, prefix=f"{api_v1_prefix}/analytics")
 
-@app.get("/")
-async def root():
-    return {
-        "name": "Civic Infrastructure Memory API",
-        "version": "2.0.0",
-        "database": "MongoDB (Active)",
-        "docs_url": "/docs",
-        "api_v1_prefix": "/api/v1"
-    }
+# Combine Frontend and Backend: Serve production React SPA from FastAPI
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(CURRENT_DIR, "static")
+FRONTEND_DIST_DIR = os.path.abspath(os.path.join(CURRENT_DIR, "..", "..", "frontend", "dist"))
+
+static_path = None
+if os.path.exists(STATIC_DIR) and os.path.isfile(os.path.join(STATIC_DIR, "index.html")):
+    static_path = STATIC_DIR
+elif os.path.exists(FRONTEND_DIST_DIR) and os.path.isfile(os.path.join(FRONTEND_DIST_DIR, "index.html")):
+    static_path = FRONTEND_DIST_DIR
+
+if static_path:
+    logger.info(f"Serving integrated frontend SPA from {static_path}")
+    assets_dir = os.path.join(static_path, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        clean_path = full_path.lstrip("/")
+        # Exclude backend API, docs, redoc, openapi.json
+        if clean_path.startswith("api/") or clean_path in ("api", "docs", "redoc", "openapi.json"):
+            raise HTTPException(status_code=404, detail="API endpoint not found")
+        
+        # Check if direct asset file exists in static root (e.g. favicon.png, logo.png, symbol.png)
+        direct_file = os.path.join(static_path, clean_path)
+        if clean_path and os.path.isfile(direct_file):
+            return FileResponse(direct_file)
+        
+        # Return React SPA index.html for all client-side navigation routes
+        return FileResponse(os.path.join(static_path, "index.html"))
+else:
+    @app.get("/")
+    async def root():
+        return {
+            "name": "Civic Infrastructure Memory API",
+            "version": "2.0.0",
+            "database": "MongoDB (Active)",
+            "docs_url": "/docs",
+            "api_v1_prefix": "/api/v1"
+        }
 
 if __name__ == "__main__":
     import uvicorn

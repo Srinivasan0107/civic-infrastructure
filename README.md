@@ -197,7 +197,24 @@ npm run dev
 
 ---
 
-### Step 5: Run Automated Tests
+### Step 5 (Alternative): Run Combined Frontend + Backend (Single Port)
+You can run both the React frontend and FastAPI backend under a single unified server on port `8000`:
+```bash
+# Option A: Python build script
+python build.py
+cd backend && python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+
+# Option B: Node / npm scripts
+npm run build
+npm start
+```
+- Unified Application & Portal: **http://127.0.0.1:8000**
+- API Endpoints: **http://127.0.0.1:8000/api/v1**
+- Interactive Swagger Documentation: **http://127.0.0.1:8000/docs**
+
+---
+
+### Step 6: Run Automated Tests
 ```bash
 # Backend pytest suite
 python -m pytest backend/tests -o asyncio_mode=auto
