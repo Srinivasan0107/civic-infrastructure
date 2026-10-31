@@ -36,10 +36,13 @@ htmlcov/
 
 # Models & Machine Learning checkpoints
 .model-cache/
-models/
+/models/
 *.pt
 *.onnx
 *.bin
+!backend/app/models/
+!backend/app/models/**
+backend/app/models/__pycache__/
 
 # Local data & MongoDB data path
 data/
