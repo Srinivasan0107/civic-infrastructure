@@ -27,14 +27,16 @@ export function PublicHeader() {
     <header className="bg-gradient-to-r from-white/95 via-teal-50/40 via-sky-50/35 to-white/95 backdrop-blur-2xl border-b border-teal-500/20 text-slate-800 shadow-[0_4px_24px_rgba(0,168,150,0.04)] sticky top-0 z-40 transition-all duration-200" role="banner">
       {/* Top utility bar */}
       <div className="border-b border-teal-500/15 bg-gradient-to-r from-slate-50/95 via-teal-50/30 to-sky-50/35 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-9 text-xs">
-          <span className="text-slate-600 font-semibold tracking-wide flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-teal-500 shadow-glass-teal" />
-            {t('header.municipal_portal')}
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-between h-9 text-xs">
+          <span className="text-slate-600 font-semibold tracking-wide flex items-center gap-1.5 min-w-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-teal-500 shadow-glass-teal shrink-0" />
+            <span className="truncate max-w-[150px] sm:max-w-none">
+              {t('header.municipal_portal')}
+            </span>
           </span>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {/* Accessibility controls */}
-            <div className="flex items-center gap-1.5" role="group" aria-label={t('a11y.font_size_controls')}>
+            <div className="hidden sm:flex items-center gap-1.5" role="group" aria-label={t('a11y.font_size_controls')}>
               <button
                 onClick={() => setFontSize('normal')}
                 className={cn('px-2 py-0.5 rounded text-xs border shadow-glass-btn transition-all active:scale-[0.98]', fontSize === 'normal' ? 'border-teal-500 bg-teal-50 text-teal-800 font-bold' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700')}
@@ -54,36 +56,36 @@ export function PublicHeader() {
                 aria-label={t('a11y.font_xlarge')}
               >A++</button>
             </div>
-            <span className="text-slate-300">|</span>
+            <span className="hidden sm:inline text-slate-300">|</span>
             <LanguageSelector variant="default" />
             <span className="text-slate-300">|</span>
-            <Link to="/login?mode=citizen" className="flex items-center gap-1 font-semibold text-slate-600 hover:text-teal-700 transition-colors">
-              <User className="h-3 w-3 text-slate-400" aria-hidden />
-              {t('nav.citizen_login')}
+            <Link to="/login?mode=citizen" className="flex items-center gap-1 font-semibold text-slate-600 hover:text-teal-700 transition-colors" title={t('nav.citizen_login')}>
+              <User className="h-3.5 w-3.5 text-slate-400" aria-hidden />
+              <span className="hidden sm:inline">{t('nav.citizen_login')}</span>
             </Link>
-            <Link to="/login?mode=employee" className="flex items-center gap-1 font-semibold text-slate-600 hover:text-teal-700 transition-colors">
-              <Lock className="h-3 w-3 text-slate-400" aria-hidden />
-              {t('nav.employee_login')}
+            <Link to="/login?mode=employee" className="flex items-center gap-1 font-semibold text-slate-600 hover:text-teal-700 transition-colors" title={t('nav.employee_login')}>
+              <Lock className="h-3.5 w-3.5 text-slate-400" aria-hidden />
+              <span className="hidden sm:inline">{t('nav.employee_login')}</span>
             </Link>
           </div>
         </div>
       </div>
 
       {/* Main header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
-        <div className="flex items-center justify-between gap-4">
-          {/* Logo / Brand - Seamless Gel Glass Capsule (Removes vertical lines/creases) */}
-          <Link to="/" className="flex items-center gap-3 flex-shrink-0 group px-2.5 py-1.5 rounded-2xl bg-white/70 hover:bg-white/95 backdrop-blur-md border border-teal-500/20 shadow-glass-btn hover:shadow-card transition-all" aria-label={t('header.home_link')}>
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5">
+        <div className="flex items-center justify-between gap-3 sm:gap-4">
+          {/* Logo / Brand - Seamless Gel Glass Capsule */}
+          <Link to="/" className="flex items-center gap-2 sm:gap-3 flex-shrink-0 group px-2 sm:px-2.5 py-1.5 rounded-2xl bg-white/70 hover:bg-white/95 backdrop-blur-md border border-teal-500/20 shadow-glass-btn hover:shadow-card transition-all" aria-label={t('header.home_link')}>
             <img
               src="/logo.png"
               alt="Civic Infrastructure Memory"
-              className="w-10 h-10 object-contain rounded-xl p-0.5 bg-white border border-teal-500/20 shadow-xs transition-transform group-hover:scale-105 flex-shrink-0"
+              className="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-xl p-0.5 bg-white border border-teal-500/20 shadow-xs transition-transform group-hover:scale-105 flex-shrink-0"
             />
             <div className="flex flex-col min-w-0">
-              <div className={cn('font-extrabold text-slate-900 tracking-tight leading-tight whitespace-nowrap flex items-center gap-1.5', fontSizeClass)}>
+              <div className={cn('font-extrabold text-slate-900 tracking-tight leading-tight text-xs sm:text-sm md:text-base flex items-center gap-1.5', fontSizeClass)}>
                 Civic Infrastructure Memory
               </div>
-              <div className="text-[11px] text-teal-700 font-semibold tracking-wide whitespace-nowrap truncate">{t('header.tagline')}</div>
+              <div className="text-[10px] sm:text-[11px] text-teal-700 font-semibold tracking-wide truncate max-w-[170px] sm:max-w-none">{t('header.tagline')}</div>
             </div>
           </Link>
 

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { complaintsApi, mediaApi, semanticApi } from '@/services/api/endpoints'
 import type { Complaint, SemanticCandidate } from '@/services/api/types'
 import {
@@ -9,19 +10,43 @@ import {
   Compass,
   Activity,
   ShieldCheck,
-  Image,
+  Image as ImageIcon,
   Trash2,
   Camera,
   Calendar,
   Clock,
   Sparkles,
-  Layers,
   MapPin,
-  ExternalLink,
-  ArrowRight
+  Copy,
+  Check,
+  RefreshCw,
+  Waves,
+  Lightbulb,
+  Building2,
+  ChevronRight,
+  Send
 } from 'lucide-react'
-import { Link } from 'react-router-dom'
 import { formatDateTime } from '@/utils/formatting'
+import { cn } from '@/utils/cn'
+
+const CATEGORIES = [
+  { id: 'road', icon: Compass, titleKey: 'services.road_title', defaultTitle: 'Road / Pothole', hint: 'Potholes, asphalt cracks' },
+  { id: 'drain', icon: Waves, titleKey: 'services.drain_title', defaultTitle: 'Drainage / Stormwater', hint: 'Overflow, blocked silt' },
+  { id: 'streetlight', icon: Lightbulb, titleKey: 'services.light_title', defaultTitle: 'Streetlight', hint: 'Outages, damaged poles' },
+  { id: 'footpath', icon: Building2, titleKey: 'services.footpath_title', defaultTitle: 'Footpath / Walkway', hint: 'Broken slabs, pavers' },
+  { id: 'public_toilet', icon: Sparkles, titleKey: 'services.toilet_title', defaultTitle: 'Public Sanitation', hint: 'Hygiene, water fixtures' },
+]
+
+const WARDS = [
+  { id: 'Bellandur', name: 'Ward 150 - Bellandur', lat: 12.926, lng: 77.674 },
+  { id: 'HSR Layout', name: 'Ward 174 - HSR Layout', lat: 12.911, lng: 77.643 },
+  { id: 'Varthur', name: 'Ward 149 - Varthur', lat: 12.941, lng: 77.712 },
+  { id: 'Rajajinagar', name: 'Ward 160 - Rajajinagar', lat: 12.991, lng: 77.552 },
+  { id: 'Domlur', name: 'Ward 112 - Domlur', lat: 12.961, lng: 77.638 },
+  { id: 'Doddanekkundi', name: 'Ward 85 - Doddanekkundi', lat: 12.973, lng: 77.694 },
+  { id: 'Mahadevapura', name: 'Ward 148 - Mahadevapura', lat: 12.990, lng: 77.689 },
+  { id: 'Indiranagar', name: 'Ward 114 - Indiranagar', lat: 12.978, lng: 77.640 },
+]
 
 export function ReportPage() {
   const { t, i18n } = useTranslation()
@@ -39,27 +64,76 @@ export function ReportPage() {
   }
   const [incidentDate, setIncidentDate] = useState<string>(getInitialLocalDateTime())
 
-  const getFormattedSelectedDate = (dateVal: string) => {
-    if (!dateVal) return 'Current timestamp'
-    try {
-      const d = new Date(dateVal)
-      if (isNaN(d.getTime())) return dateVal
-      return formatDateTime(d.toISOString(), i18n.language)
-    } catch {
-      return dateVal
-    }
-  }
+  // GPS Geolocation state
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number; accuracy?: number } | null>(null)
+  const [isLocating, setIsLocating] = useState(false)
+  const [locationStatus, setLocationStatus] = useState<string | null>(null)
 
   // Live Similar Grievance Detection
   const [liveSimilar, setLiveSimilar] = useState<SemanticCandidate[]>([])
   const [isSearchingSimilar, setIsSearchingSimilar] = useState(false)
   const searchTimeoutRef = useRef<any>(null)
 
+  // File & Camera upload state
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [uploadedAttachmentInfo, setUploadedAttachmentInfo] = useState<{
+    attachment_id: string
+    detections: any[]
+    stream_url?: string
+  } | null>(null)
+
+  const [submittedReport, setSubmittedReport] = useState<Complaint | null>(null)
+  const [copiedId, setCopiedId] = useState(false)
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+
+  // Handle GPS Auto-Detection
+  const handleGetLocation = () => {
+    if (!('geolocation' in navigator)) {
+      setLocationStatus('Geolocation is not supported by your browser')
+      return
+    }
+
+    setIsLocating(true)
+    setLocationStatus('Acquiring high-accuracy GPS coordinates...')
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = parseFloat(pos.coords.latitude.toFixed(6))
+        const lng = parseFloat(pos.coords.longitude.toFixed(6))
+        const accuracy = Math.round(pos.coords.accuracy)
+        setGpsCoords({ lat, lng, accuracy })
+        setIsLocating(false)
+        setLocationStatus(`GPS locked: ±${accuracy}m accuracy`)
+
+        // Closest ward lookup
+        let closestWard = 'Bellandur'
+        let minDistance = Infinity
+        WARDS.forEach((w) => {
+          const d = Math.hypot(w.lat - lat, w.lng - lng)
+          if (d < minDistance) {
+            minDistance = d
+            closestWard = w.id
+          }
+        })
+        setWard(closestWard)
+      },
+      (err) => {
+        setIsLocating(false)
+        console.warn('Geolocation error:', err.message)
+        setLocationStatus('GPS access denied or unavailable. Please select your Ward manually.')
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    )
+  }
+
   // Live debounced semantic search as citizen types description
   useEffect(() => {
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
 
-    if (desc.trim().length < 3) {
+    if (desc.trim().length < 4) {
       setLiveSimilar([])
       setIsSearchingSimilar(false)
       return
@@ -72,11 +146,10 @@ export function ReportPage() {
           query: desc,
           language: i18n.language || 'en',
           filters: category ? { asset_type: category } : {},
-          top_k: 4
+          top_k: 4,
         })
         const items = res.data.items || []
-        // Filter candidates with meaningful similarity
-        setLiveSimilar(items.filter(it => it.text_similarity >= 0.35).slice(0, 4))
+        setLiveSimilar(items.filter((it) => it.text_similarity >= 0.35).slice(0, 4))
       } catch (err) {
         console.debug('Live similarity check err:', err)
       } finally {
@@ -88,18 +161,6 @@ export function ReportPage() {
       if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
     }
   }, [desc, category, i18n.language])
-
-  // File upload state
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [uploadedAttachmentInfo, setUploadedAttachmentInfo] = useState<{
-    attachment_id: string
-    detections: any[]
-    stream_url?: string
-  } | null>(null)
-
-  const [submittedReport, setSubmittedReport] = useState<Complaint | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -116,9 +177,14 @@ export function ReportPage() {
       URL.revokeObjectURL(previewUrl)
       setPreviewUrl(null)
     }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
+    if (fileInputRef.current) fileInputRef.current.value = ''
+    if (cameraInputRef.current) cameraInputRef.current.value = ''
+  }
+
+  const handleCopyId = (id: string) => {
+    navigator.clipboard.writeText(id)
+    setCopiedId(true)
+    setTimeout(() => setCopiedId(false), 2500)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -126,7 +192,6 @@ export function ReportPage() {
     if (!desc.trim()) return
     setSubmitting(true)
 
-    // Calculate normalized ISO date from user's chosen local date-time
     let formattedReportedAt = new Date().toISOString()
     try {
       if (incidentDate) {
@@ -140,32 +205,39 @@ export function ReportPage() {
     }
 
     try {
-      // 1. Submit complaint to backend with explicit reported_at
-      const res = await complaintsApi.create({
+      const payload: any = {
         description_original: desc,
         category,
         ward,
         consent,
-        reported_at: formattedReportedAt
-      })
+        reported_at: formattedReportedAt,
+      }
+
+      if (gpsCoords) {
+        payload.location = {
+          longitude: gpsCoords.lng,
+          latitude: gpsCoords.lat,
+        }
+      }
+
+      const res = await complaintsApi.create(payload)
       const createdComplaint = res.data
       if (!createdComplaint.reported_at) {
         createdComplaint.reported_at = formattedReportedAt
       }
       setSubmittedReport(createdComplaint)
 
-      // 2. If photo is attached, upload to GridFS media bucket
       if (selectedFile && createdComplaint) {
         try {
           const mediaRes = await mediaApi.uploadAttachment(selectedFile, {
             complaint_id: createdComplaint.complaint_id,
             asset_id: createdComplaint.asset_id || undefined,
-            relation: 'reported_with'
+            relation: 'reported_with',
           })
           setUploadedAttachmentInfo({
             attachment_id: mediaRes.data.attachment_id,
             detections: (mediaRes.data as any).detections || [],
-            stream_url: (mediaRes.data as any).stream_url
+            stream_url: (mediaRes.data as any).stream_url,
           })
         } catch (mediaErr) {
           console.error('Error uploading photo attachment:', mediaErr)
@@ -185,8 +257,8 @@ export function ReportPage() {
         status: 'open',
         reported_at: formattedReportedAt,
         closed_at: null,
-        location: null,
-        location_accuracy: 'ward_only',
+        location: gpsCoords ? { type: 'Point', coordinates: [gpsCoords.lng, gpsCoords.lat] } : null,
+        location_accuracy: gpsCoords ? 'exact' : 'ward_only',
         ward,
         candidate_asset_ids: ['RD-0001'],
         asset_id: 'RD-0001',
@@ -204,72 +276,97 @@ export function ReportPage() {
           record_id: null,
           retrieved_at: formattedReportedAt,
           license_url: null,
-          coverage: null
+          coverage: null,
         },
         verification: {
           status: 'unverified' as any,
           method: 'Portal Submission',
           reviewed_by: null,
-          reviewed_at: null
+          reviewed_at: null,
         },
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       })
     } finally {
       setSubmitting(false)
     }
   }
 
-  // --- SUBMISSION RECEIPT VIEW ---
+  // ==========================================
+  // SUBMISSION RECEIPT VIEW (Mobile & Laptop)
+  // ==========================================
   if (submittedReport) {
     const displayReportedAt = submittedReport.reported_at || submittedReport.created_at
     const evidence = submittedReport.same_problem_evidence
     const candidates = (evidence as any)?.similar_candidates || []
 
     return (
-      <div className="max-w-2xl mx-auto px-4 py-12 space-y-6">
-        <div className="card text-center space-y-5 p-8 border-t-4 border-t-teal-600 bg-white shadow-clay-elevated">
-          <div className="w-16 h-16 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center mx-auto text-teal-600 shadow-inner">
-            <CheckCircle2 className="h-10 w-10" />
+      <div className="max-w-3xl mx-auto px-3.5 sm:px-6 lg:px-8 py-6 sm:py-12 space-y-5">
+        <div className="card text-center space-y-5 p-4 sm:p-8 border-t-4 border-t-teal-600 bg-white/95 backdrop-blur-md shadow-clay-elevated rounded-2xl sm:rounded-3xl border border-slate-200/80">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-teal-50 border border-teal-200/90 flex items-center justify-center mx-auto text-teal-600 shadow-glass-teal">
+            <CheckCircle2 className="h-8 w-8 sm:h-10 sm:w-10" />
           </div>
 
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-teal-700 bg-teal-50 border border-teal-200 px-2.5 py-0.5 rounded-full">
+          <div className="space-y-1.5">
+            <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-teal-700 bg-teal-50 border border-teal-200 px-3 py-0.5 rounded-full">
               Registration Confirmed
             </span>
-            <h2 className="text-2xl font-bold text-slate-800 mt-2">{t('report.success_title')}</h2>
-            <p className="text-slate-600 text-sm mt-1">
-              {t('report.success_msg')}:{' '}
-              <strong className="text-navy-950 font-mono text-base bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200">
-                {submittedReport.complaint_id}
-              </strong>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">
+              {t('report.success_title')}
+            </h2>
+            <p className="text-slate-600 text-xs sm:text-sm">
+              {t('report.success_msg')}
             </p>
+
+            {/* Tap-to-Copy Tracking ID Box */}
+            <div className="pt-2 flex items-center justify-center">
+              <div className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200/70 border border-slate-300 rounded-xl px-3 sm:px-4 py-2 transition-all shadow-xs">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Tracking ID:</span>
+                <span className="text-navy-950 font-mono font-extrabold text-sm sm:text-base tracking-wide">
+                  {submittedReport.complaint_id}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleCopyId(submittedReport.complaint_id)}
+                  className="p-1 rounded-md text-teal-700 hover:text-teal-900 hover:bg-white/80 active:scale-95 transition-all"
+                  title="Copy Grievance ID"
+                >
+                  {copiedId ? (
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                      <Check className="h-3.5 w-3.5" /> Copied
+                    </span>
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Primary Receipt Data Strip with Exact Reported Date & Time */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
-            <div className="flex items-center gap-2">
+          {/* Primary Receipt Data Strip */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 text-left bg-slate-50/90 p-3.5 sm:p-4 rounded-xl border border-slate-200/90 text-xs">
+            <div className="flex items-center gap-2.5">
               <Calendar className="h-4 w-4 text-teal-600 shrink-0" />
-              <div>
+              <div className="min-w-0">
                 <span className="text-slate-400 text-[10px] uppercase font-semibold block">Incident Reported Date</span>
-                <span className="font-bold text-slate-800">
+                <span className="font-bold text-slate-800 truncate block">
                   {formatDateTime(displayReportedAt, i18n.language)}
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <MapPin className="h-4 w-4 text-sky-600 shrink-0" />
-              <div>
+              <div className="min-w-0">
                 <span className="text-slate-400 text-[10px] uppercase font-semibold block">Ward & Corridor</span>
-                <span className="font-bold text-slate-800">
+                <span className="font-bold text-slate-800 truncate block">
                   {submittedReport.ward || 'Bellandur'} • {submittedReport.category}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Automated Semantic Linkage & Recurrence Results */}
-          <div className="text-left bg-white p-4 rounded-xl border border-slate-200 space-y-3.5 shadow-sm">
+          {/* Automated Semantic Linkage & Recurrence Intelligence */}
+          <div className="text-left bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200/90 space-y-3 shadow-xs">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <div className="flex items-center gap-2 font-bold text-xs text-navy-950">
                 <ShieldCheck className="h-4 w-4 text-teal-600" />
@@ -295,9 +392,9 @@ export function ReportPage() {
               </div>
             </div>
 
-            {/* Same Problem Recurrence Intelligence ("and it similar") */}
+            {/* Same Problem Recurrence Intelligence */}
             {(submittedReport.is_recurring || evidence || (candidates && candidates.length > 0)) && (
-              <div className="space-y-2 bg-amber-50/70 p-3.5 rounded-xl border border-amber-200 text-xs">
+              <div className="space-y-2 bg-amber-50/70 p-3 sm:p-3.5 rounded-xl border border-amber-200 text-xs">
                 <div className="flex items-start gap-2 text-amber-900 font-bold">
                   <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
                   <div>
@@ -313,57 +410,22 @@ export function ReportPage() {
                   </div>
                 </div>
 
-                {/* Evidence Details */}
                 {evidence && (
-                  <div className="bg-white/90 p-3 rounded-lg border border-amber-200 space-y-1.5 text-[11px] text-slate-700 mt-2">
-                    <div className="flex items-center justify-between">
+                  <div className="bg-white/90 p-2.5 sm:p-3 rounded-lg border border-amber-200 space-y-1.5 text-[11px] text-slate-700 mt-2">
+                    <div className="flex items-center justify-between flex-wrap gap-1">
                       <span className="font-semibold text-amber-900 flex items-center gap-1">
                         <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-                        BERT Semantic Match: {evidence.similarity_percent}% Similarity
+                        BERT Match: {evidence.similarity_percent}% Similarity
                       </span>
                       <span className="text-[10px] text-slate-500 font-mono">
                         Matched: {evidence.top_match_id}
                       </span>
                     </div>
-                    <p className="text-slate-600 italic border-l-2 border-amber-400 pl-2 py-0.5">
+                    <p className="text-slate-600 italic border-l-2 border-amber-400 pl-2 py-0.5 break-words">
                       "{evidence.top_match_text}"
                     </p>
-                    <p className="text-[10px] text-slate-500">
-                      {evidence.recurrence_explanation}
-                    </p>
                   </div>
                 )}
-
-                {/* Additional Similar Complaints List */}
-                {candidates && candidates.length > 0 && (
-                  <div className="mt-2 pt-2 border-t border-amber-200/80 space-y-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 block">
-                      Similar Grievances on this Asset Corridor:
-                    </span>
-                    <div className="space-y-1.5">
-                      {candidates.map((c: any) => (
-                        <div key={c.complaint_id} className="flex items-center justify-between text-[11px] bg-white/90 p-2 rounded-lg border border-amber-200/70">
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-mono text-navy-900 font-bold">{c.complaint_id}</span>
-                              <span className="text-[10px] text-slate-400 font-mono">
-                                {c.date_gap_days ? `${c.date_gap_days}d ago` : 'Recent'}
-                              </span>
-                            </div>
-                            <span className="text-slate-600 block truncate mt-0.5">{c.description}</span>
-                          </div>
-                          <span className="font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 whitespace-nowrap ml-2">
-                            {c.similarity_percent}% match
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <span className="text-[11px] text-amber-800 font-medium block pt-1">
-                  &rarr; Your grievance reinforces chronic failure evidence; asset priority score automatically escalated for engineering overhaul.
-                </span>
               </div>
             )}
 
@@ -374,31 +436,28 @@ export function ReportPage() {
                   <img
                     src={previewUrl}
                     alt="Uploaded photographic evidence"
-                    className="h-16 w-16 object-cover rounded-lg border border-teal-300 shrink-0"
+                    className="h-14 w-14 sm:h-16 sm:w-16 object-cover rounded-lg border border-teal-300 shrink-0"
                   />
                 )}
-                <div className="space-y-1 text-xs">
-                  <span className="font-bold text-teal-900 flex items-center gap-1">
-                    <Image className="h-3.5 w-3.5 text-teal-700" />
-                    Photographic Ground Truth Saved in MongoDB GridFS
+                <div className="space-y-1 text-xs min-w-0">
+                  <span className="font-bold text-teal-900 flex items-center gap-1 truncate">
+                    <ImageIcon className="h-3.5 w-3.5 text-teal-700 shrink-0" />
+                    Photographic Ground Truth Saved in GridFS
                   </span>
                   <p className="text-[11px] text-teal-800">
                     File ID: <strong>{uploadedAttachmentInfo?.attachment_id || 'IMG-LIVE-ATTACH'}</strong>
                   </p>
-                  {uploadedAttachmentInfo?.detections && uploadedAttachmentInfo.detections.length > 0 && (
-                    <span className="text-[10px] text-slate-700 bg-white/90 px-2 py-0.5 rounded border border-teal-200 inline-block font-mono">
-                      YOLO RDD2022: {uploadedAttachmentInfo.detections[0].class_label} ({Math.round(uploadedAttachmentInfo.detections[0].confidence * 100)}% conf)
-                    </span>
-                  )}
                 </div>
               </div>
             )}
           </div>
 
-          <p className="text-xs text-slate-500 pt-1">{t('report.track_hint')}</p>
+          <p className="text-xs text-slate-500">{t('report.track_hint')}</p>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          {/* Action Buttons: Full-width on mobile, auto on laptop */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
             <button
+              type="button"
               onClick={() => {
                 setSubmittedReport(null)
                 setUploadedAttachmentInfo(null)
@@ -406,12 +465,14 @@ export function ReportPage() {
                 setPreviewUrl(null)
                 setDesc('')
                 setIncidentDate(getInitialLocalDateTime())
+                setGpsCoords(null)
+                setLocationStatus(null)
               }}
-              className="btn-secondary text-xs"
+              className="btn-secondary w-full sm:w-auto text-xs justify-center"
             >
               Submit Another Grievance
             </button>
-            <Link to="/citizen/complaints" className="btn-teal text-xs">
+            <Link to="/citizen/complaints" className="btn-teal w-full sm:w-auto text-xs justify-center">
               View My Registered Grievances
             </Link>
           </div>
@@ -420,45 +481,104 @@ export function ReportPage() {
     )
   }
 
-  // --- COMPLAINT SUBMISSION FORM VIEW ---
+  // ==========================================
+  // COMPLAINT SUBMISSION FORM (Mobile & Laptop)
+  // ==========================================
   return (
-    <div className="max-w-2xl mx-auto px-4 py-12 space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
+    <div className="max-w-3xl mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-10 space-y-5 sm:space-y-6">
+      {/* Page Title & Context Header */}
+      <div className="space-y-1">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-50 text-teal-800 border border-teal-200">
+          <Activity className="h-3.5 w-3.5 text-teal-600" />
+          <span>BBMP Public Grievance Intake</span>
+        </div>
+        <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
           {t('report.title')}
         </h1>
-        <p className="text-slate-500 text-sm mt-1">
+        <p className="text-slate-500 text-xs sm:text-sm">
           {t('report.subtitle')}
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="card-elevated space-y-5 bg-white p-6 shadow-clay-elevated">
+      <form onSubmit={handleSubmit} className="card-elevated !p-4 sm:!p-7 !bg-white/95 !border-slate-200/80 shadow-clay-elevated space-y-5 backdrop-blur-md">
+        {/* Tactile Category Selector Grid (Thumb-friendly on phone, clear on laptop) */}
+        <div>
+          <label className="form-label flex items-center justify-between mb-2">
+            <span className="font-bold text-slate-800">{t('report.category_label')} *</span>
+            <span className="text-[11px] text-teal-700 font-semibold">Select Infrastructure Type</span>
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+            {CATEGORIES.map((cat) => {
+              const Icon = cat.icon
+              const isSelected = category === cat.id
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setCategory(cat.id)}
+                  className={cn(
+                    'p-2.5 sm:p-3 rounded-2xl border text-left transition-all flex flex-col justify-between gap-1.5 active:scale-[0.98]',
+                    isSelected
+                      ? 'bg-gradient-to-br from-teal-50 to-teal-100/60 border-teal-500 text-teal-950 shadow-glass-teal ring-1 ring-teal-500/30'
+                      : 'bg-white/80 hover:bg-slate-50 border-slate-200/80 text-slate-700 shadow-glass-btn'
+                  )}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <div className={cn(
+                      'p-1.5 rounded-xl border flex items-center justify-center transition-colors',
+                      isSelected ? 'bg-teal-500 text-white border-teal-600' : 'bg-slate-100 text-slate-600 border-slate-200'
+                    )}>
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    {isSelected && <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />}
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold block leading-tight">
+                      {t(cat.titleKey, cat.defaultTitle)}
+                    </span>
+                    <span className="text-[10px] text-slate-500 block truncate mt-0.5">
+                      {cat.hint}
+                    </span>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
         {/* Description Textarea */}
         <div>
-          <label className="form-label">{t('report.desc_label')} *</label>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="form-label !mb-0 font-bold text-slate-800">
+              {t('report.desc_label')} *
+            </label>
+            <span className="text-[11px] text-slate-400 font-medium">
+              English, ಕನ್ನಡ, हिंदी, தமிழ், తెలుగు
+            </span>
+          </div>
           <textarea
             required
             rows={4}
             value={desc}
-            onChange={e => setDesc(e.target.value)}
-            placeholder={t('report.desc_placeholder')}
-            className="form-input"
+            onChange={(e) => setDesc(e.target.value)}
+            placeholder={t('report.desc_placeholder', 'Describe the civic problem, landmark, road width, or hazards (e.g. Deep pothole near Outer Ring Road flyover opposite EcoWorld)...')}
+            className="form-input text-xs sm:text-sm !p-3 rounded-xl resize-y"
           />
         </div>
 
-        {/* Real-time "Similar Incidents" Live Helper while Typing ("and it similar") */}
-        {desc.trim().length >= 8 && (
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 text-xs transition-all animate-fade-in">
+        {/* Real-time "Similar Incidents" Live Helper while Citizen Types */}
+        {desc.trim().length >= 4 && (
+          <div className="bg-gradient-to-r from-teal-50/60 via-slate-50/70 to-teal-50/60 border border-teal-500/20 rounded-xl p-3 sm:p-3.5 space-y-2 text-xs transition-all shadow-xs">
             <div className="flex items-center justify-between">
               <span className="font-bold text-navy-950 flex items-center gap-1.5 text-[11px]">
-                <Sparkles className="h-3.5 w-3.5 text-teal-600" />
+                <Sparkles className="h-3.5 w-3.5 text-teal-600 shrink-0" />
                 {isSearchingSimilar
-                  ? 'Checking existing reports on this corridor...'
+                  ? 'Checking existing corridor records...'
                   : liveSimilar.length > 0
                   ? `⚡ ${liveSimilar.length} Similar Existing Incidents Detected by BERT`
                   : '✓ No duplicate grievances detected on this corridor so far'}
               </span>
-              <span className="text-[10px] text-slate-400 font-mono">Live Memory Engine</span>
+              <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">Multilingual BERT</span>
             </div>
 
             {liveSimilar.length > 0 && (
@@ -466,10 +586,10 @@ export function ReportPage() {
                 {liveSimilar.map((item) => (
                   <div
                     key={item.complaint_id}
-                    className="p-2 rounded-lg bg-white border border-slate-200/80 flex items-center justify-between gap-3 text-[11px] hover:border-teal-300 transition-colors"
+                    className="p-2 sm:p-2.5 rounded-lg bg-white/95 border border-slate-200/80 flex items-center justify-between gap-2.5 text-[11px] hover:border-teal-300 transition-colors shadow-2xs"
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="font-mono font-bold text-navy-900">{item.complaint_id}</span>
                         <span className="text-[10px] px-1.5 py-0.2 rounded bg-teal-50 text-teal-700 font-semibold border border-teal-200">
                           {Math.round(item.text_similarity * 100)}% Match
@@ -493,73 +613,126 @@ export function ReportPage() {
           </div>
         )}
 
-        {/* Date and Ward Strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Incident Date & Time Picker */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="form-label !mb-0 flex items-center gap-1">
-                <Calendar className="h-3.5 w-3.5 text-teal-600" />
-                Incident Date & Time *
+        {/* Location & Ward Section with 1-Tap Mobile GPS */}
+        <div className="space-y-2.5 p-3 sm:p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <label className="text-xs font-bold text-slate-800 flex items-center gap-1">
+                <MapPin className="h-3.5 w-3.5 text-teal-600" />
+                Incident Location & Ward *
               </label>
+              <p className="text-[11px] text-slate-500">
+                1-tap GPS auto-tags precise coordinates from your device
+              </p>
+            </div>
+
+            {/* 1-Tap GPS Button */}
+            <button
+              type="button"
+              onClick={handleGetLocation}
+              disabled={isLocating}
+              className={cn(
+                'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border shadow-glass-btn active:scale-[0.98] transition-all',
+                gpsCoords
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                  : 'bg-white hover:bg-teal-50 text-teal-800 border-teal-500/30'
+              )}
+            >
+              <RefreshCw className={cn('h-3.5 w-3.5 text-teal-600', isLocating && 'animate-spin')} />
+              <span>{isLocating ? 'Locating...' : gpsCoords ? 'Update GPS Location' : '📍 Auto-Detect My Location'}</span>
+            </button>
+          </div>
+
+          {/* GPS Coordinates Badge if active */}
+          {gpsCoords && (
+            <div className="flex items-center justify-between bg-emerald-50/90 border border-emerald-200 rounded-xl px-3 py-1.5 text-xs text-emerald-900">
+              <span className="font-mono text-[11px] font-semibold">
+                📍 {gpsCoords.lat}° N, {gpsCoords.lng}° E {gpsCoords.accuracy && `(±${gpsCoords.accuracy}m)`}
+              </span>
               <button
                 type="button"
-                onClick={() => setIncidentDate(getInitialLocalDateTime())}
-                className="text-[10px] text-teal-700 hover:text-teal-900 font-semibold bg-teal-50 hover:bg-teal-100 px-2 py-0.5 rounded border border-teal-200 transition-colors flex items-center gap-1"
-                title="Reset to current local date & time"
+                onClick={() => {
+                  setGpsCoords(null)
+                  setLocationStatus(null)
+                }}
+                className="text-[10px] text-emerald-700 hover:text-emerald-900 underline font-semibold ml-2"
               >
-                <Clock className="h-3 w-3" />
-                Now
+                Clear
               </button>
             </div>
-            <input
-              type="datetime-local"
-              required
-              value={incidentDate}
-              onChange={e => setIncidentDate(e.target.value)}
-              className="form-input text-xs font-mono"
-            />
-            <span className="text-[11px] text-teal-800 bg-teal-50/70 border border-teal-200 px-2 py-0.5 rounded mt-1.5 flex items-center justify-between font-medium">
-              <span className="text-slate-500 text-[10px]">Active Timestamp:</span>
-              <span className="font-semibold">{getFormattedSelectedDate(incidentDate)}</span>
-            </span>
-          </div>
+          )}
 
-          {/* Category Dropdown */}
-          <div>
-            <label className="form-label">{t('report.category_label')}</label>
-            <select value={category} onChange={e => setCategory(e.target.value)} className="form-input text-xs">
-              <option value="road">{t('services.road_title', 'Road / Pothole')}</option>
-              <option value="drain">{t('services.drain_title', 'Drainage / Stormwater')}</option>
-              <option value="streetlight">{t('services.light_title', 'Streetlight')}</option>
-              <option value="footpath">{t('services.footpath_title', 'Footpath / Walkway')}</option>
-              <option value="public_toilet">{t('services.toilet_title', 'Sanitation / Toilet')}</option>
-            </select>
-          </div>
+          {locationStatus && !gpsCoords && (
+            <div className="text-[11px] text-slate-500 italic">
+              {locationStatus}
+            </div>
+          )}
 
-          {/* Ward Dropdown */}
+          {/* Ward Select */}
           <div>
-            <label className="form-label">{t('report.ward_label')}</label>
-            <select value={ward} onChange={e => setWard(e.target.value)} className="form-input text-xs">
-              <option value="Bellandur">Ward 150 - Bellandur</option>
-              <option value="HSR Layout">Ward 174 - HSR Layout</option>
-              <option value="Varthur">Ward 149 - Varthur</option>
-              <option value="Rajajinagar">Ward 160 - Rajajinagar</option>
-              <option value="Domlur">Ward 112 - Domlur</option>
-              <option value="Doddanekkundi">Ward 85 - Doddanekkundi</option>
-              <option value="Mahadevapura">Ward 148 - Mahadevapura</option>
-              <option value="Indiranagar">Ward 114 - Indiranagar</option>
+            <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+              Bengaluru Ward Selection:
+            </label>
+            <select
+              value={ward}
+              onChange={(e) => setWard(e.target.value)}
+              className="form-input text-xs !py-2 rounded-xl"
+            >
+              {WARDS.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name}
+                </option>
+              ))}
             </select>
           </div>
         </div>
 
-        {/* Real Functional Photograph Upload */}
+        {/* Date and Time Picker */}
+        <div className="p-3 sm:p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold text-slate-800 flex items-center gap-1">
+              <Calendar className="h-3.5 w-3.5 text-teal-600" />
+              Incident Date & Time *
+            </label>
+            <button
+              type="button"
+              onClick={() => setIncidentDate(getInitialLocalDateTime())}
+              className="text-[10px] text-teal-700 hover:text-teal-900 font-semibold bg-white hover:bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200 transition-colors flex items-center gap-1 shadow-2xs"
+              title="Reset to current local date & time"
+            >
+              <Clock className="h-3 w-3" />
+              Right Now
+            </button>
+          </div>
+          <input
+            type="datetime-local"
+            required
+            value={incidentDate}
+            onChange={(e) => setIncidentDate(e.target.value)}
+            className="form-input text-xs font-mono !py-2 rounded-xl w-full"
+          />
+          <div className="text-[11px] text-slate-600 flex items-center justify-between">
+            <span className="text-slate-400">Timestamp:</span>
+            <span className="font-semibold text-teal-800 font-mono">{getFormattedSelectedDate(incidentDate)}</span>
+          </div>
+        </div>
+
+        {/* Photographic Evidence (Dual Mode: Phone Camera or Laptop File Picker) */}
         <div>
-          <label className="form-label flex items-center justify-between">
-            <span>{t('report.photo_label')}</span>
-            <span className="text-slate-400 font-normal text-xs">Optional photographic evidence</span>
+          <label className="form-label flex items-center justify-between mb-2">
+            <span className="font-bold text-slate-800">{t('report.photo_label')}</span>
+            <span className="text-[11px] text-slate-400 font-normal">Optional photo evidence</span>
           </label>
 
+          {/* Hidden inputs: One for Camera capture, one for File selection */}
+          <input
+            type="file"
+            ref={cameraInputRef}
+            onChange={handleFileChange}
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+          />
           <input
             type="file"
             ref={fileInputRef}
@@ -569,35 +742,58 @@ export function ReportPage() {
           />
 
           {!previewUrl ? (
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-civic-border rounded-xl p-6 text-center hover:bg-slate-50 transition-colors cursor-pointer group"
-            >
-              <UploadCloud className="h-8 w-8 text-slate-400 group-hover:text-teal-600 transition-colors mx-auto mb-2" />
-              <p className="text-xs text-slate-700 font-medium">Click to select photograph or drag and drop</p>
-              <p className="text-[11px] text-slate-400 mt-1">PNG, JPG, or WEBP up to 20MB • Runs YOLO defect detection into GridFS</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {/* Button 1: Live Camera Photo (Mobile-First) */}
+              <button
+                type="button"
+                onClick={() => cameraInputRef.current?.click()}
+                className="p-4 rounded-2xl border-2 border-dashed border-teal-500/40 hover:border-teal-500 bg-teal-50/30 hover:bg-teal-50/70 text-left transition-all group flex items-center gap-3.5"
+              >
+                <div className="w-10 h-10 rounded-xl bg-teal-500 text-white flex items-center justify-center shrink-0 shadow-glass-teal group-hover:scale-105 transition-transform">
+                  <Camera className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-xs font-bold text-teal-950 block">Take Live Photo</span>
+                  <span className="text-[10px] text-teal-700 block truncate">Use phone camera directly</span>
+                </div>
+              </button>
+
+              {/* Button 2: Upload Files (Desktop / Phone Gallery) */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="p-4 rounded-2xl border-2 border-dashed border-slate-300 hover:border-teal-500 bg-slate-50/60 hover:bg-teal-50/40 text-left transition-all group flex items-center gap-3.5"
+              >
+                <div className="w-10 h-10 rounded-xl bg-slate-200 group-hover:bg-teal-100 text-slate-700 group-hover:text-teal-800 flex items-center justify-center shrink-0 transition-colors">
+                  <UploadCloud className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-xs font-bold text-slate-800 block">Browse Files</span>
+                  <span className="text-[10px] text-slate-500 block truncate">PNG, JPG up to 20MB</span>
+                </div>
+              </button>
             </div>
           ) : (
-            <div className="relative border border-teal-200 bg-teal-50/30 rounded-xl p-3 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
+            <div className="relative border border-teal-200 bg-teal-50/40 rounded-2xl p-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
                 <img
                   src={previewUrl}
                   alt="Preview"
-                  className="h-16 w-16 object-cover rounded-lg border border-slate-200"
+                  className="h-16 w-16 object-cover rounded-xl border border-teal-300 shrink-0 shadow-xs"
                 />
-                <div>
-                  <p className="text-xs font-semibold text-slate-800 truncate max-w-[200px] sm:max-w-xs">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-800 truncate">
                     {selectedFile?.name}
                   </p>
                   <p className="text-[11px] text-slate-500">
-                    {(selectedFile?.size ? (selectedFile.size / 1024).toFixed(1) : '0')} KB • Ready for GridFS AI Ingestion
+                    {(selectedFile?.size ? (selectedFile.size / 1024).toFixed(1) : '0')} KB • Ready for GridFS AI
                   </p>
                   <button
                     type="button"
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => cameraInputRef.current?.click()}
                     className="text-[11px] text-teal-700 font-semibold hover:underline mt-0.5 inline-block"
                   >
-                    Change photograph
+                    Replace photo
                   </button>
                 </div>
               </div>
@@ -605,8 +801,8 @@ export function ReportPage() {
               <button
                 type="button"
                 onClick={handleRemoveFile}
-                className="p-1.5 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                title="Remove photograph"
+                className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                title="Remove photo"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -614,27 +810,44 @@ export function ReportPage() {
           )}
         </div>
 
-        {/* Public Consent */}
-        <div className="flex items-start gap-2 pt-2">
+        {/* Public Consent Checkbox */}
+        <div className="flex items-start gap-2.5 pt-1">
           <input
             type="checkbox"
             id="consent"
             checked={consent}
-            onChange={e => setConsent(e.target.checked)}
+            onChange={(e) => setConsent(e.target.checked)}
             required
-            className="mt-1 h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
           />
-          <label htmlFor="consent" className="text-xs text-slate-600 leading-normal">
+          <label htmlFor="consent" className="text-xs text-slate-600 leading-normal cursor-pointer">
             {t('report.consent_label')}
           </label>
         </div>
 
-        <button type="submit" disabled={submitting} className="btn-teal w-full justify-center py-2.5">
-          {submitting ? t('report.submitting') : t('report.submit_btn')}
+        {/* Full-Width Mobile-Friendly Submit CTA */}
+        <button
+          type="submit"
+          disabled={submitting}
+          className="btn-teal w-full justify-center !py-3 text-sm font-bold shadow-glass-teal active:scale-[0.99] transition-all flex items-center gap-2"
+        >
+          <Send className="h-4 w-4" />
+          <span>{submitting ? t('report.submitting') : t('report.submit_btn')}</span>
         </button>
       </form>
     </div>
   )
+}
+
+function getFormattedSelectedDate(dateVal: string) {
+  if (!dateVal) return 'Current timestamp'
+  try {
+    const d = new Date(dateVal)
+    if (isNaN(d.getTime())) return dateVal
+    return formatDateTime(d.toISOString(), 'en')
+  } catch {
+    return dateVal
+  }
 }
 
 export default ReportPage

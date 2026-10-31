@@ -212,7 +212,7 @@ export function DashboardShell() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top bar - elevated z-index so dropdowns float cleanly above page hero */}
-        <header className="relative z-40 h-16 bg-white/95 backdrop-blur-md border-b border-civic-border flex items-center justify-between px-4 sm:px-6 lg:px-8 shadow-sm">
+        <header className="relative z-50 h-16 bg-white/95 backdrop-blur-md border-b border-civic-border flex items-center justify-between px-3 sm:px-6 lg:px-8 shadow-sm">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
